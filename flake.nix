@@ -14,23 +14,37 @@
   outputs = { self, flake-schemas, nixpkgs }:
     let
       # Helpers for producing system-specific outputs
-      supportedSystems = [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" "aarch64-linux" ];
-      forEachSupportedSystem = f: nixpkgs.lib.genAttrs supportedSystems (system: f {
-        pkgs = import nixpkgs { inherit system; };
+      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
+      devSystems = [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" "aarch64-linux" ];
+      forEachSupportedSystem = forSomeSupportedSystems supportedSystems;
+      forEachDevSystem = forSomeSupportedSystems devSystems;
+      forSomeSupportedSystems = systems: f: nixpkgs.lib.genAttrs systems (system: f {
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [
+            (import ./phps/phps.nix nixpkgs)
+            (import ./mysqls/mysqls.nix nixpkgs)
+          ];
+        };
       });
     in
     {
       # Schemas tell Nix about the structure of your flake's outputs
       schemas = flake-schemas.schemas;
 
+      packages = forEachSupportedSystem ({ pkgs, ... }: {
+        inherit (pkgs) php56 php70 php71 php72 php73 php74 php80 php81 php82 php83
+        mysql80;
+      });
+
       # Development environments
-      devShells = forEachSupportedSystem ({ pkgs }:
+      devShells = forEachDevSystem ({ pkgs, ... }:
         let
           mkNushellScript =
             { name
             , script
             , bin ? name
-            , path ? []
+            , path ? [ ]
             }:
 
             let
