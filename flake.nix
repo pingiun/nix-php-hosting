@@ -57,7 +57,7 @@
               (mkNushellScript {
                 name = "update-phps";
                 script = builtins.readFile ./scripts/update-phps.nu;
-                path = with pkgs; [ git ];
+                path = with pkgs; [ coreutils git rsync ];
               })
             ];
           };
