@@ -34,7 +34,7 @@
 
       packages = forEachSupportedSystem ({ pkgs, ... }: {
         inherit (pkgs) php56 php70 php71 php72 php73 php74 php80 php81 php82 php83
-        mysql80;
+        mysql57 mysql80;
       });
 
       # Development environments

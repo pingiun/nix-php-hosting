@@ -135,6 +135,7 @@ let
   mkPhp = args: prev.callPackage generic (_mkArgs args);
 in
 {
+  mysql57 = prev.callPackage ./mysql/5.7.nix {};
   mysql80 = prev.php80.override {
     # inherit packageOverrides;
   };
