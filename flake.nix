@@ -21,6 +21,9 @@
       forSomeSupportedSystems = systems: f: nixpkgs.lib.genAttrs systems (system: f {
         pkgs = import nixpkgs {
           inherit system;
+          config.permittedInsecurePackages = [
+                "openssl-1.1.1w"
+              ];
           overlays = [
             (import ./phps/phps.nix nixpkgs)
             (import ./mysqls/mysqls.nix nixpkgs)

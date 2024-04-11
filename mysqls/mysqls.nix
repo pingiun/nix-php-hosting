@@ -135,7 +135,14 @@ let
   mkPhp = args: prev.callPackage generic (_mkArgs args);
 in
 {
-  mysql57 = prev.callPackage ./mysql/5.7.nix {};
+  # https://github.com/NixOS/nixpkgs/blob/611bf8f183e6360c2a215fa70dfd659943a9857f/pkgs/servers/sql/mysql/5.7.x.nix
+  mysql57 = prev.callPackage ./mysql/5.7.nix {
+    inherit (prev.darwin) cctools developer_cmds;
+    inherit (prev.darwin.apple_sdk.frameworks) CoreServices;
+    boost = prev.callPackage ./boost/1.59.nix {};
+    protobuf = prev.protobuf3_23;
+    openssl = prev.openssl_1_1;
+  };
   mysql80 = prev.php80.override {
     # inherit packageOverrides;
   };
