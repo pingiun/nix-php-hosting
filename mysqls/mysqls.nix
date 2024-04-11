@@ -1,7 +1,5 @@
 nixpkgs:
 
-# These are older versions of PHP removed from Nixpkgs.
-
 final:
 prev:
 
