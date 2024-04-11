@@ -6,4 +6,4 @@ callPackage ./generic.nix {
   hash = "sha256-0";
   inherit (darwin) cctools;
   inherit (darwin.apple_sdk.frameworks) CoreServices;
-};
+}
