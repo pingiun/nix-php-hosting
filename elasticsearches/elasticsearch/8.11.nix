@@ -19,9 +19,9 @@ let
   shas =
     {
       x86_64-linux   = "08x2dndvcl7amign9dz9sv1lm1vbp84zsm1y23cxlfdv463x3rq0";
-      x86_64-darwin  = "0n3zh8r1rzg7jac6xnrxr5330wnhl9pnjljqsqxymy4sh29sciy3";
-      aarch64-linux  = "1cfq7467sam5pvrx26lrfa5r9jic2s71g0fdlqmscmpmhw4ix8hs";
-      aarch64-darwin = "17mwcjv9bv592brf511yaymlpwdiq0anf4ac4qqrrc5l8szbizan";
+      x86_64-darwin  = "06gdziqj26xx58clyd40cdjp5xyh982ni3yn61fm4pdr247ac4l3";
+      aarch64-linux  = "1wpd086cz8dgdlf9b9nwp5bn5w3w417c9qgc8k296k4ra29dxkd2";
+      aarch64-darwin = "1czjg9xzwgwcja2280vjsrr07vdr4w5p764acffv1s2f652is99f";
     };
 in
 stdenv.mkDerivation rec {
