@@ -72,7 +72,7 @@ stdenv.mkDerivation rec {
 
   meta = {
     description = "Open Source, Distributed, RESTful Search Engine";
-    license = licenses.elastic;
+    license = licenses.elastic20;
     platforms = platforms.unix;
     maintainers = with maintainers; [ apeschar basvandijk ];
   };
