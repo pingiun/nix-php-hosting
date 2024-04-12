@@ -28,6 +28,7 @@
             (import ./phps/phps.nix nixpkgs)
             (import ./mysqls/mysqls.nix nixpkgs)
             (import ./mariadbs/mariadbs.nix nixpkgs)
+            (import ./redises/redises.nix nixpkgs)
           ];
         };
       });
