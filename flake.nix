@@ -21,9 +21,14 @@
       forSomeSupportedSystems = systems: f: nixpkgs.lib.genAttrs systems (system: f {
         pkgs = import nixpkgs {
           inherit system;
-          config.permittedInsecurePackages = [
-            "openssl-1.1.1w" # Required by MySQL 5.7
-          ];
+          config = {
+            permittedInsecurePackages = [
+              "openssl-1.1.1w" # Required by MySQL 5.7
+            ];
+            allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
+              "elasticsearch"
+            ];
+          };
           overlays = [
             (import ./phps/phps.nix nixpkgs)
             (import ./mysqls/mysqls.nix nixpkgs)
@@ -45,7 +50,7 @@
           mysql57 mysql80
           redis_60 redis_62 redis_70 redis_72
           varnish64 varnish65 varnish70 varnish71 varnish73 varnish75
-          elasticsearch_716 elasticsearch_717;
+          elasticsearch_716 elasticsearch_717 elasticsearch_84;
       });
 
       # Development environments
