@@ -39,8 +39,9 @@
 
       packages = forEachSupportedSystem ({ pkgs, ... }: {
         inherit (pkgs) php56 php70 php71 php72 php73 php74 php80 php81 php82 php83
-          mariadb_104 mariadb_106 mysql57 mysql80
-          redis_62 redis_70 redis_72;
+          mariadb_104 mariadb_106
+          mysql57 mysql80
+          redis_60 redis_62 redis_70 redis_72;
       });
 
       # Development environments
