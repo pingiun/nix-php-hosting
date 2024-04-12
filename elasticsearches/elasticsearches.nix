@@ -10,4 +10,7 @@ prev:
   elasticsearch_84 = (prev.callPackage ./elasticsearch/8.4.nix {}).override {
     elk7Version = "8.4.3";
   };
+  elasticsearch_85 = (prev.callPackage ./elasticsearch/8.5.nix {}).override {
+    elk7Version = "8.5.3";
+  };
 }
