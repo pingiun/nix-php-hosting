@@ -11,7 +11,7 @@
 # Attributes inherit from specific versions
 , version, hash
 , ...
-}@args:
+}:
 
 stdenv.mkDerivation ({
   pname = "redis";
@@ -91,4 +91,4 @@ stdenv.mkDerivation ({
     maintainers = with maintainers; [ berdario globin marsam ];
     mainProgram = "redis-cli";
   };
-} // args)
+})
