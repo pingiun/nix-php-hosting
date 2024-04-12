@@ -110,7 +110,6 @@ let
 
       postInstall = lib.optionalString (!withEmbedded) ''
         # Remove Development components. Need to use libmysqlclient.
-        rm "$out"/lib/mysql/plugin/daemon_example.ini
         rm "$out"/lib/{libmariadb.a,libmariadbclient.a,libmysqlclient.a,libmysqlclient_r.a,libmysqlservices.a}
         rm -f "$out"/bin/{mariadb-config,mariadb_config,mysql_config}
         rm -r $out/include
@@ -225,9 +224,9 @@ let
         rm -r "$out"/share/aclocal
         chmod +x "$out"/bin/wsrep_sst_common
         rm -f "$out"/bin/{mariadb-client-test,mariadb-test,mysql_client_test,mysqltest}
-      '' + lib.optionalString withStorageMroonga ''
+      '' + lib.optionalString (withStorageMroonga && lib.versionAtLeast common.version "10.5") ''
         mv "$out"/share/{groonga,groonga-normalizer-mysql} "$out"/share/doc/mysql
-      '' + lib.optionalString (!stdenv.hostPlatform.isDarwin && lib.versionAtLeast common.version "10.4") ''
+      '' + lib.optionalString (!stdenv.hostPlatform.isDarwin && lib.versionAtLeast common.version "10.5") ''
         mv "$out"/OFF/suite/plugins/pam/pam_mariadb_mtr.so "$out"/share/pam/lib/security
         mv "$out"/OFF/suite/plugins/pam/mariadb_mtr "$out"/share/pam/etc/security
         rm -r "$out"/OFF
