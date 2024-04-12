@@ -30,6 +30,7 @@
             (import ./mariadbs/mariadbs.nix nixpkgs)
             (import ./redises/redises.nix nixpkgs)
             (import ./varnishes/varnishes.nix nixpkgs)
+            (import ./elasticsearches/elasticsearches.nix nixpkgs)
           ];
         };
       });
@@ -43,7 +44,8 @@
           mariadb_104 mariadb_106
           mysql57 mysql80
           redis_60 redis_62 redis_70 redis_72
-          varnish64 varnish65 varnish70 varnish71 varnish73 varnish75;
+          varnish64 varnish65 varnish70 varnish71 varnish73 varnish75
+          elasticsearch_716 elasticsearch_717;
       });
 
       # Development environments
