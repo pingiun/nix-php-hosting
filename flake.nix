@@ -37,6 +37,63 @@
             (import ./packages/elasticsearches/elasticsearches.nix nixpkgs)
             (import ./packages/opensearches/opensearches.nix nixpkgs)
             (import ./packages/rabbitmqs/rabbitmqs.nix nixpkgs)
+            (final: prev: {
+              phpHosting = {
+                php = {
+                  "5.6" = prev.php56;
+                  "7.0" = prev.php70;
+                  "7.1" = prev.php71;
+                  "7.2" = prev.php72;
+                  "7.3" = prev.php73;
+                  "7.4" = prev.php74;
+                  "8.0" = prev.php80;
+                  "8.1" = prev.php81;
+                  "8.2" = prev.php82;
+                  "8.3" = prev.php83;
+                };
+                mariadb = {
+                  "10.4" = prev.mariadb_104;
+                  "10.6" = prev.mariadb_106;
+                };
+                mysql = {
+                  "5.7" = prev.mysql57;
+                  "8.0" = prev.mysql80;
+                };
+                redis = {
+                  "6.0" = prev.redis_60;
+                  "6.2" = prev.redis_62;
+                  "7.0" = prev.redis_70;
+                  "7.2" = prev.redis_72;
+                };
+                varnish = {
+                  "6.4" = prev.varnish64;
+                  "6.5" = prev.varnish65;
+                  "7.0" = prev.varnish70;
+                  "7.1" = prev.varnish71;
+                  "7.3" = prev.varnish73;
+                  "7.5" = prev.varnish75;
+                };
+                elasticsearch = {
+                  "7.9" = prev.elasticsearch_79;
+                  "7.16" = prev.elasticsearch_716;
+                  "7.17" = prev.elasticsearch_717;
+                  "8.4" = prev.elasticsearch_84;
+                  "8.5" = prev.elasticsearch_85;
+                  "8.11" = prev.elasticsearch_811;
+                };
+                opensearch = {
+                  "1.2" = prev.opensearch_12;
+                  "1.3" = prev.opensearch_13;
+                  "2.5" = prev.opensearch_25;
+                  "2.12" = prev.opensearch_212;
+                };
+                rabbitmq = {
+                  "3.11" = prev.rabbitmq_311;
+                  "3.12" = prev.rabbitmq_312;
+                  "3.13" = prev.rabbitmq_313;
+                };
+              };
+            })
           ];
         };
       });
@@ -59,12 +116,13 @@
         inherit (pkgs) php56;
       });
 
-      checks = forEachSupportedSystem ({ pkgs, ... }:
-        {
-          redis-nixos = (pkgs.extend (self: super: {
-            redis = pkgs.redis_70;
-          })).nixosTests.redis;
-        });
+      checks = forEachSupportedSystem ({ pkgs, ... }: with pkgs.lib;
+        mapAttrs' (name: value: nameValuePair "nixos-redis-${name}" (
+          pkgs.extend (self: super: {
+            redis = value;
+          })).nixosTests.redis
+        ) pkgs.phpHosting.redis
+      );
 
       # Development environments
       devShells = forEachDevSystem ({ pkgs, ... }:
