@@ -4,9 +4,6 @@
 
   nodes.machine =
     { config, ... }: with lib; {
-      disabledModules = [ "services/search/opensearch.nix" ];
-      imports = [ ./patched-opensearch.nix ];
-
       virtualisation.memorySize = 2048;
       services.opensearch.enable = true;
     };
