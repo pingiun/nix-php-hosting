@@ -25,7 +25,7 @@ let
 
         {
           patches =
-            attrs.patches or []
+            attrs.patches or [ ]
             ++ prev.lib.optionals (prev.lib.versions.majorMinor args.version == "5.6") [
               # Patch to make it build with autoconf >= 2.72
               # Source: https://aur.archlinux.org/packages/php56-ldap?all_deps=1#comment-954506
@@ -93,9 +93,9 @@ let
         } // prev.lib.optionalAttrs (prev.stdenv.cc.isClang) {
           # Downgrade the following errors to warnings. `-Wint-conversion` only affects PHP 7.3.
           NIX_CFLAGS_COMPILE = (attrs.NIX_CFLAGS_COMPILE or "")
-            + prev.lib.optionalString (prev.lib.versionOlder args.version "8.2") " -Wno-compare-distinct-pointer-types -Wno-implicit-const-int-float-conversion -Wno-deprecated-declarations -Wno-incompatible-function-pointer-types -Wno-incompatible-pointer-types-discards-qualifiers"
-            + prev.lib.optionalString (prev.lib.versionOlder args.version "8.0") " -Wno-implicit-int -Wno-implicit-function-declaration"
-            + prev.lib.optionalString (prev.lib.versionAtLeast args.version "7.3" && prev.lib.versionOlder args.version "7.4") " -Wno-int-conversion";
+          + prev.lib.optionalString (prev.lib.versionOlder args.version "8.2") " -Wno-compare-distinct-pointer-types -Wno-implicit-const-int-float-conversion -Wno-deprecated-declarations -Wno-incompatible-function-pointer-types -Wno-incompatible-pointer-types-discards-qualifiers"
+          + prev.lib.optionalString (prev.lib.versionOlder args.version "8.0") " -Wno-implicit-int -Wno-implicit-function-declaration"
+          + prev.lib.optionalString (prev.lib.versionAtLeast args.version "7.3" && prev.lib.versionOlder args.version "7.4") " -Wno-int-conversion";
         };
 
       # For passing pcre2 to php-packages.nix.
@@ -127,7 +127,7 @@ let
                   })
               );
           }
-      );
+        );
     }
     // args;
 
@@ -135,8 +135,6 @@ let
   mkPhp = args: prev.callPackage generic (_mkArgs args);
 in
 {
-  php56 = import ./php/5.6.nix { inherit prev mkPhp; };
-
   php70 = import ./php/7.0.nix { inherit prev mkPhp; };
 
   php71 = import ./php/7.1.nix { inherit prev mkPhp; };
@@ -160,4 +158,7 @@ in
   php83 = prev.php83.override {
     inherit packageOverrides;
   };
-}
+} # only include php 5.6 if this is x86_64-linux, it seems to completely fail on aarch64
+  // (prev.lib.optionalAttrs (prev.stdenv.hostPlatform.system == "x86_64-linux") {
+  php56 = import ./php/5.6.nix { inherit prev mkPhp; };
+})
