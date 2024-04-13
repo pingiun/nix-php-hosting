@@ -76,7 +76,7 @@ stdenv.mkDerivation ({
       --timeout 2000 \
       --clients $NIX_BUILD_CORES \
       --tags -leaks \
-      --skipunit integration/failover # flaky and slow
+      --skipunit integration/failover # flaky and slow \
       --skipunit integration/aof-multi-part # Seems to only fail in Garnix CI
 
     runHook postCheck
