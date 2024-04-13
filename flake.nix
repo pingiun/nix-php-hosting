@@ -116,17 +116,16 @@
         inherit (pkgs) php56;
       });
 
-      # checks = forEachSupportedSystem ({ pkgs, ... }: with pkgs.lib;
-      #   mapAttrs' (name: value: nameValuePair "nixos-redis-${replaceStrings ["."] ["-"] name}" (
-      #     pkgs.testers.runNixOSTest ./redis.nix
-      #   ) pkgs.phpHosting.redis)
-      # );
-
-      checks = forEachSupportedSystem ({ pkgs, ... }: {
-        nixos-redis = (pkgs.extend (final: prev: {
-          redis = pkgs.redis_60;
-        })).testers.runNixOSTest ./tests/redis.nix;
-      });
+      checks = forEachSupportedSystem ({ pkgs, ... }: with pkgs.lib;
+        mapAttrs'
+          (name: value:
+            nameValuePair
+              "nixos-redis-${replaceStrings ["."] ["-"] name}"
+              ((pkgs.extend (final: prev: {
+                redis = value;
+              })).testers.runNixOSTest ./tests/redis.nix))
+          pkgs.phpHosting.redis
+      );
 
       # Development environments
       devShells = forEachDevSystem ({ pkgs, ... }:
