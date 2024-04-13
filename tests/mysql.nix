@@ -75,4 +75,4 @@
         "echo 'use testdb; select test_id from tests;' | sudo -u testuser mysql -u testuser -N | grep 42"
     )
   '';
-};
+}
