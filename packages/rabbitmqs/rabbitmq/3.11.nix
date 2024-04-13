@@ -4,7 +4,7 @@
 , Cocoa
 }:
 callPackage ./generic.nix {
-  version = "3.13.1";
-  hash = "sha256-Yuw7xBho7zPg2396wIJpAVoeyPZJIvt4tnoPkVASYBA=";
+  version = "3.11.28";
+  hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
   inherit AppKit Carbon Cocoa;
 }

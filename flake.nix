@@ -37,6 +37,7 @@
             (import ./packages/varnishes/varnishes.nix nixpkgs)
             (import ./packages/elasticsearches/elasticsearches.nix nixpkgs)
             (import ./packages/opensearches/opensearches.nix nixpkgs)
+            (import ./packages/rabbitmqs/rabbitmqs.nix nixpkgs)
           ];
         };
       });
