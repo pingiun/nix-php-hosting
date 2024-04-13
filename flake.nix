@@ -139,8 +139,8 @@
             nameValuePair
               "nixos-mariadb-${replaceStrings ["."] ["-"] name}"
               ((pkgs.extend (final: prev: {
-                mysql = value; # The module is setup to use the mysql package
-              })).testers.runNixOSTest ./tests/mysql.nix))
+                mariadb = value; # The module is setup to use the mysql package
+              })).testers.runNixOSTest ./tests/mariadb.nix))
           pkgs.phpHosting.mariadb)
         // (mapAttrs'
           (name: value:
