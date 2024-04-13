@@ -123,7 +123,9 @@
       # );
 
       checks = forEachSupportedSystem ({ pkgs, ... }: {
-        nixos-redis = pkgs.testers.runNixOSTest ./tests/redis.nix;
+        nixos-redis = (pkgs.extend (final: prev: {
+          redis = pkgs.redis_60;
+        })).testers.runNixOSTest ./tests/redis.nix;
       });
 
       # Development environments
