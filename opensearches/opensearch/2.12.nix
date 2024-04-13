@@ -1,5 +1,5 @@
 { callPackage }:
-callPackage ./generic {
+callPackage ./generic.nix {
   version = "2.12.0";
   hashes = {
     "x86_64-linux" = "1l1arik6mi0zq3ig9793x87yyg3kx425958zsz31pkw3gbgkmnxp";

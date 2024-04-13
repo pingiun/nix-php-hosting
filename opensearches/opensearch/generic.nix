@@ -12,9 +12,9 @@
 }:
 
 let
-  info = splitString "-" stdenv.hostPlatform.system;
-  nixArch = elemAt info 0;
-  plat = elemAt info 1;
+  info = lib.splitString "-" stdenv.hostPlatform.system;
+  nixArch = lib.elemAt info 0;
+  plat = lib.elemAt info 1;
   arch = {
     "x86_64" = "x64";
     "aarch64" = "arm64";
@@ -26,7 +26,7 @@ stdenvNoCC.mkDerivation {
 
   src = fetchurl {
     url = "https://artifacts.opensearch.org/releases/bundle/opensearch/${version}/opensearch-${version}-linux-${arch}.tar.gz";
-    hash = hashes.${stdenv.hostPlatform.system};
+    sha256 = hashes.${stdenv.hostPlatform.system};
   };
 
   nativeBuildInputs = [

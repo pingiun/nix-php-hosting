@@ -52,7 +52,7 @@
           redis_60 redis_62 redis_70 redis_72
           varnish64 varnish65 varnish70 varnish71 varnish73 varnish75
           elasticsearch_79 elasticsearch_716 elasticsearch_717 elasticsearch_84 elasticsearch_85 elasticsearch_811
-          opensearch_212;
+          opensearch_12 opensearch_13 opensearch_25 opensearch_212;
       });
 
       # Development environments
