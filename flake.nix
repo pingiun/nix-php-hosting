@@ -47,7 +47,7 @@
 
       packages = forEachSupportedSystem ({ pkgs, ... }: {
         inherit (pkgs)
-          php56 php70 php71 php72 php73 php74 php80 php81 php82 php83
+          php70 php71 php72 php73 php74 php80 php81 php82 php83
           mariadb_104 mariadb_106
           mysql57 mysql80
           redis_60 redis_62 redis_70 redis_72
@@ -55,6 +55,8 @@
           elasticsearch_79 elasticsearch_716 elasticsearch_717 elasticsearch_84 elasticsearch_85 elasticsearch_811
           opensearch_12 opensearch_13 opensearch_25 opensearch_212
           rabbitmq_311 rabbitmq_312 rabbitmq_313;
+      } // nixpkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
+        inherit (pkgs) php56;
       });
 
       # Development environments
