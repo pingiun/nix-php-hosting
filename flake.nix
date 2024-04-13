@@ -59,6 +59,11 @@
         inherit (pkgs) php56;
       });
 
+      checks = forEachSupportedSystem ({ pkgs, ... }:
+        {
+          redis-nixos = pkgs.redis_72.tests.redis;
+        });
+
       # Development environments
       devShells = forEachDevSystem ({ pkgs, ... }:
         let
