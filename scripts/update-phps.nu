@@ -1,3 +1,5 @@
+# Copyright Jelle Besseling, 2024, licensed under the EUPL
+
 let repoRoot = (git rev-parse --show-toplevel)
 
 print $"Will return to ($repoRoot)"
