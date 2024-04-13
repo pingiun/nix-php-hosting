@@ -61,7 +61,9 @@
 
       checks = forEachSupportedSystem ({ pkgs, ... }:
         {
-          redis-nixos = pkgs.nixosTests.redis;
+          redis-nixos = (pkgs.extend (self: super: {
+            redis = pkgs.redis_70;
+          })).nixosTests.redis;
         });
 
       # Development environments
