@@ -116,7 +116,8 @@
         inherit (pkgs) php56;
       });
 
-      checks = forEachSupportedSystem ({ pkgs, ... }: with pkgs.lib;
+      checks = forEachSupportedSystem
+        ({ pkgs, ... }: with pkgs.lib;
         (mapAttrs'
           (name: value:
             nameValuePair
@@ -133,7 +134,15 @@
                 mysql = value;
               })).testers.runNixOSTest ./tests/mysql.nix))
           pkgs.phpHosting.mysql)
-      );
+        // (mapAttrs'
+          (name: value:
+            nameValuePair
+              "nixos-mariadb-${replaceStrings ["."] ["-"] name}"
+              ((pkgs.extend (final: prev: {
+                mariadb = value;
+              })).testers.runNixOSTest ./tests/mysql.nix))
+          pkgs.phpHosting.mariadb)
+        );
 
       # Development environments
       devShells = forEachDevSystem ({ pkgs, ... }:
