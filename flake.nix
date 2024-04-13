@@ -30,13 +30,13 @@
             ];
           };
           overlays = [
-            (import ./phps/phps.nix nixpkgs)
-            (import ./mysqls/mysqls.nix nixpkgs)
-            (import ./mariadbs/mariadbs.nix nixpkgs)
-            (import ./redises/redises.nix nixpkgs)
-            (import ./varnishes/varnishes.nix nixpkgs)
-            (import ./elasticsearches/elasticsearches.nix nixpkgs)
-            (import ./opensearches/opensearches.nix nixpkgs)
+            (import ./packages/phps/phps.nix nixpkgs)
+            (import ./packages/mysqls/mysqls.nix nixpkgs)
+            (import ./packages/mariadbs/mariadbs.nix nixpkgs)
+            (import ./packages/redises/redises.nix nixpkgs)
+            (import ./packages/varnishes/varnishes.nix nixpkgs)
+            (import ./packages/elasticsearches/elasticsearches.nix nixpkgs)
+            (import ./packages/opensearches/opensearches.nix nixpkgs)
           ];
         };
       });
