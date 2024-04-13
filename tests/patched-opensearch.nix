@@ -99,6 +99,7 @@ in
       default = ''
         logger.action.name = org.opensearch.action
         logger.action.level = info
+        path.logs = ${cfg.dataDir}/logs
 
         appender.console.type = Console
         appender.console.name = console
