@@ -33,6 +33,14 @@ in
       type = lib.types.submodule {
         freeformType = settingsFormat.type;
 
+        options."path.logs" = lib.mkOption {
+          type = lib.types.path;
+          default = "${cfg.dataDir}/logs";
+          description = lib.mdDoc ''
+            The directory where OpenSearch writes its log files.
+          '';
+        };
+
         options."network.host" = lib.mkOption {
           type = lib.types.str;
           default = "127.0.0.1";
@@ -99,7 +107,6 @@ in
       default = ''
         logger.action.name = org.opensearch.action
         logger.action.level = info
-        path.logs = ${cfg.dataDir}/logs
 
         appender.console.type = Console
         appender.console.name = console

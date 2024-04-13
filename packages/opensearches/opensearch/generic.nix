@@ -37,7 +37,9 @@ stdenvNoCC.mkDerivation {
     jre_headless
   ];
 
-  installPhase = ''
+  patches = lib.optional (!lib.versionOlder version "2.5") [ ./opensearch-home-old.patch ];
+
+    installPhase = ''
     runHook preInstall
 
     mkdir -p $out
