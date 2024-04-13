@@ -5,11 +5,11 @@ prev:
 {
   elasticsearch_79 = (prev.callPackage ./elasticsearch/7.9.nix {}).override {
     elk7Version = "7.9.3";
-    jre_headless = prev.jre11_headless;
+    jre_headless = prev.jdk11_headless;
   };
   elasticsearch_716 = (prev.callPackage ./elasticsearch/7.16.nix {}).override {
     elk7Version = "7.16.1";
-    jre_headless = prev.jre11_headless;
+    jre_headless = prev.jdk11_headless;
   };
   elasticsearch_717 = prev.elasticsearch;
   elasticsearch_84 = (prev.callPackage ./elasticsearch/8.4.nix {}).override {
