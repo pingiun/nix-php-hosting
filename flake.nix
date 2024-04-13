@@ -23,10 +23,10 @@
           inherit system;
           config = {
             permittedInsecurePackages = [
-              "openssl-1.1.1w" # Required by MySQL 5.7
+              "openssl-1.1.1w" # Required by MySQL 5.7, MariaDB 10.4
             ];
             allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
-              "elasticsearch"
+              "elasticsearch" # Required by Elasticsearch
             ];
           };
           overlays = [
@@ -46,13 +46,15 @@
       schemas = flake-schemas.schemas;
 
       packages = forEachSupportedSystem ({ pkgs, ... }: {
-        inherit (pkgs) php56 php70 php71 php72 php73 php74 php80 php81 php82 php83
+        inherit (pkgs)
+          php56 php70 php71 php72 php73 php74 php80 php81 php82 php83
           mariadb_104 mariadb_106
           mysql57 mysql80
           redis_60 redis_62 redis_70 redis_72
           varnish64 varnish65 varnish70 varnish71 varnish73 varnish75
           elasticsearch_79 elasticsearch_716 elasticsearch_717 elasticsearch_84 elasticsearch_85 elasticsearch_811
-          opensearch_12 opensearch_13 opensearch_25 opensearch_212;
+          opensearch_12 opensearch_13 opensearch_25 opensearch_212
+          rabbitmq_312 rabbitmq_313;
       });
 
       # Development environments
