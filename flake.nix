@@ -117,14 +117,22 @@
       });
 
       checks = forEachSupportedSystem ({ pkgs, ... }: with pkgs.lib;
-        mapAttrs'
+        (mapAttrs'
           (name: value:
             nameValuePair
               "nixos-redis-${replaceStrings ["."] ["-"] name}"
               ((pkgs.extend (final: prev: {
                 redis = value;
               })).testers.runNixOSTest ./tests/redis.nix))
-          pkgs.phpHosting.redis
+          pkgs.phpHosting.redis)
+        // (mapAttrs'
+          (name: value:
+            nameValuePair
+              "nixos-mysql-${replaceStrings ["."] ["-"] name}"
+              ((pkgs.extend (final: prev: {
+                mysql = value;
+              })).testers.runNixOSTest ./tests/mysql.nix))
+          pkgs.phpHosting.mysql)
       );
 
       # Development environments
