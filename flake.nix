@@ -142,6 +142,14 @@
                 mysql = value; # The module is setup to use the mysql package
               })).testers.runNixOSTest ./tests/mysql.nix))
           pkgs.phpHosting.mariadb)
+        // (mapAttrs'
+          (name: value:
+            nameValuePair
+              "nixos-opensearch-${replaceStrings ["."] ["-"] name}"
+              ((pkgs.extend (final: prev: {
+                opensearch = value;
+              })).testers.runNixOSTest ./tests/opensearch.nix))
+          pkgs.phpHosting.opensearch)
         );
 
       # Development environments
