@@ -123,7 +123,7 @@
       # );
 
       checks = forEachSupportedSystem ({ pkgs, ... }: {
-        nixos-redis = pkgs.testers.runNixOSTest ./redis.nix;
+        nixos-redis = pkgs.testers.runNixOSTest ./tests/redis.nix;
       });
 
       # Development environments

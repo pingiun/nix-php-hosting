@@ -1,4 +1,4 @@
-{
+{ lib, ... }: {
   name = "redis";
   meta.maintainers = with lib.maintainers; [ flokli ];
 
