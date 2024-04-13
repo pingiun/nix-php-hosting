@@ -118,9 +118,9 @@
 
       checks = forEachSupportedSystem ({ pkgs, ... }: with pkgs.lib;
         mapAttrs' (name: value: nameValuePair "nixos-redis-${name}" (
-          pkgs.extend (self: super: {
+          pkgs.appendOverlays [(self: super: {
             redis = value;
-          })).nixosTests.redis
+          })]).nixosTests.redis
         ) pkgs.phpHosting.redis
       );
 
