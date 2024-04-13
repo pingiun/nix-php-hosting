@@ -1,14 +1,12 @@
-{ pkgs, lib, extraSettings ? { } }: {
+{ pkgs, lib, ... }: {
   name = "opensearch";
   meta.maintainers = with pkgs.lib.maintainers; [ shyim ];
 
-  nodes.machine = lib.mkMerge [
+  nodes.machine =
     {
       virtualisation.memorySize = 2048;
       services.opensearch.enable = true;
-    }
-    extraSettings
-  ];
+    };
 
   testScript = ''
     machine.start()
