@@ -16,7 +16,7 @@
   # > Call Stack (most recent call first):
   # >   CMakeLists.txt:387 (CHECK_PCRE)
   # Fix the above error by using the bundled pcre
-  cmakeFlags = [
+  cmakeFlags = oldAttrs.cmakeFlags ++ [
     "-DWITH_PCRE=bundled"
   ];
 })

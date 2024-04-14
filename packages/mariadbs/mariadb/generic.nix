@@ -230,10 +230,6 @@ let
         mv "$out"/OFF/suite/plugins/pam/pam_mariadb_mtr.so "$out"/share/pam/lib/security
         mv "$out"/OFF/suite/plugins/pam/mariadb_mtr "$out"/share/pam/etc/security
         rm -r "$out"/OFF
-      '' + lib.optionalString (lib.versionOlder common.version "10.5") ''
-        patchShebangs scripts/mysql_install_db
-        cp scripts/mysql_install_db "$out"/bin
-        ln -s "$out"/bin/mysql_install_db "$out"/bin/mariadb-install-db
       '';
 
       CXXFLAGS = lib.optionalString stdenv.hostPlatform.isi686 "-fpermissive";
