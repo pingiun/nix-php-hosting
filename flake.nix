@@ -102,6 +102,10 @@
       # Schemas tell Nix about the structure of your flake's outputs
       schemas = flake-schemas.schemas;
 
+      nixosModules = {
+        magento = import ./modules/magento.nix;
+      };
+
       packages = forEachSupportedSystem ({ pkgs, ... }: {
         inherit (pkgs)
           php70 php71 php72 php73 php74 php80 php81 php82 php83
