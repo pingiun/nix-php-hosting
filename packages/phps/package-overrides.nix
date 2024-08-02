@@ -290,6 +290,11 @@ in
         prev.extensions.inotify;
 
     intl = prev.extensions.intl.overrideAttrs (attrs: {
+      buildInputs =
+        if lib.versionOlder prev.php.version "8.1.0" then
+          (builtins.filter (pkg: pkg != pkgs.icu73) attrs.buildInputs) ++ [ pkgs.icu64 ]
+        else
+          attrs.buildInputs;
       doCheck = if lib.versionOlder prev.php.version "7.2" then false else attrs.doCheck or true;
       patches =
         let
@@ -392,6 +397,15 @@ in
         })
       else
         prev.extensions.mbstring;
+
+    mcrypt =
+      if lib.versionOlder prev.php.version "7.0" then
+        prev.mkExtension {
+          name = "mcrypt";
+          configureFlags = [ "--with-mcrypt=${pkgs.libmcrypt.outPath}" ];
+        }
+      else
+        throw "php.extensions.mcrypt requires PHP version < 7.0.";
 
     memcached =
       if lib.versionOlder prev.php.version "7.0" then
