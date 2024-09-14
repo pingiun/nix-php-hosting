@@ -178,6 +178,7 @@
         with pkgs.lib;
         {
           activation = pkgs.testers.runNixOSTest (import ./tests/activation-script.nix ./modules/default.nix);
+          xdg-write = pkgs.testers.runNixOSTest (import ./tests/xdg-write.nix ./modules/default.nix);
         }
         // (mapAttrs' (
           name: value:
