@@ -39,10 +39,18 @@ in
         The home directory of the project user
       '';
     };
+
+    project.sessionVariables = mkOption {
+      type = types.attrsOf types.str;
+      default = { };
+      description = ''
+        Environment variables to set in the user's session
+      '';
+    };
   };
 
   config = {
     project.username = cfg.name;
-    project.homeDirectory = nixosConfig.users.users.${cfg.name}.home;
+    project.homeDirectory = "/project/${cfg.name}";
   };
 }

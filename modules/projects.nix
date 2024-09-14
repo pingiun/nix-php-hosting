@@ -15,7 +15,7 @@ let
     description = "Project module";
     class = "project";
     specialArgs = {
-      osConfig = config;
+      nixosConfig = config;
       modulesPath = builtins.toString ./project;
       inherit pkgs;
     };

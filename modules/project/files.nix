@@ -6,7 +6,9 @@ let
 
   cfg = filterAttrs (n: f: f.enable) config.project.file;
 
-  homeDirectory = config.home.homeDirectory;
+  homeDirectory = config.project.homeDirectory;
+
+  homeManagerLib = builtins.readFile ./home-manager-lib.sh;
 
   fileType = (import lib/file-type.nix {
     inherit homeDirectory lib pkgs;
@@ -61,45 +63,6 @@ in
       })
     ];
 
-    lib.file.mkOutOfStoreSymlink = path:
-      let
-        pathStr = toString path;
-        name = (baseNameOf pathStr);
-      in
-        pkgs.runCommandLocal name {} ''ln -s ${escapeShellArg pathStr} $out'';
-
-    # This verifies that the links we are about to create will not
-    # overwrite an existing file.
-    system.activationScripts.checkLinkTargets = (
-      let
-        # Paths that should be forcibly overwritten by Home Manager.
-        # Caveat emptor!
-        forcedPaths =
-          concatMapStringsSep " " (p: ''"$HOME"/${escapeShellArg p}'')
-            (mapAttrsToList (n: v: v.target)
-            (filterAttrs (n: v: v.force) cfg));
-
-        storeDir = escapeShellArg builtins.storeDir;
-
-        check = pkgs.substituteAll {
-          src = ./files/check-link-targets.sh;
-
-          inherit (config.lib.bash) initHomeManagerLib;
-          inherit forcedPaths storeDir;
-        };
-      in
-      ''
-        function checkNewGenCollision() {
-          local newGenFiles
-          newGenFiles="$(readlink -e "$newGenPath/home-files")"
-          find "$newGenFiles" \( -type f -or -type l \) \
-              -exec bash ${check} "$newGenFiles" {} +
-        }
-
-        checkNewGenCollision || exit 1
-      ''
-    );
-
     # This activation script will
     #
     # 1. Remove files from the old generation that are not in the new
@@ -124,7 +87,7 @@ in
     system.activationScripts.linkGeneration = (
       let
         link = pkgs.writeShellScript "link" ''
-          ${config.lib.bash.initHomeManagerLib}
+          ${homeManagerLib}
 
           newGenFiles="$1"
           shift
@@ -150,7 +113,7 @@ in
         '';
 
         cleanup = pkgs.writeShellScript "cleanup" ''
-          ${config.lib.bash.initHomeManagerLib}
+          ${homeManagerLib}
 
           # A symbolic link whose target path matches this pattern will be
           # considered part of a Home Manager generation.
@@ -191,21 +154,21 @@ in
             _i "Creating home file links in %s" "$HOME"
 
             local newGenFiles
-            newGenFiles="$(readlink -e "$newGenPath/home-files")"
+            newGenFiles="$(readlink -e "$newGenPath/project-files")"
             find "$newGenFiles" \( -type f -or -type l \) \
               -exec bash ${link} "$newGenFiles" {} +
           }
 
           function cleanOldGen() {
-            if [[ ! -v oldGenPath || ! -e "$oldGenPath/home-files" ]] ; then
+            if [[ ! -v oldGenPath || ! -e "$oldGenPath/project-files" ]] ; then
               return
             fi
 
             _i "Cleaning up orphan links from %s" "$HOME"
 
             local newGenFiles oldGenFiles
-            newGenFiles="$(readlink -e "$newGenPath/home-files")"
-            oldGenFiles="$(readlink -e "$oldGenPath/home-files")"
+            newGenFiles="$(readlink -e "$newGenPath/project-files")"
+            oldGenFiles="$(readlink -e "$oldGenPath/project-files")"
 
             # Apply the cleanup script on each leaf in the old
             # generation. The find command below will print the
@@ -282,7 +245,7 @@ in
 
     # Symlink directories and files that have the right execute bit.
     # Copy files that need their execute bit changed.
-    home-files = pkgs.runCommandLocal
+    project-files = pkgs.runCommandLocal
       "home-manager-files"
       {
         nativeBuildInputs = [ pkgs.xorg.lndir ];

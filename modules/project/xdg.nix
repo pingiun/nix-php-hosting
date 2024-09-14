@@ -106,7 +106,7 @@ in {
     })
 
     {
-      home.file = mkMerge [
+      project.file = mkMerge [
         (mapAttrs' (name: file: nameValuePair "${cfg.configHome}/${name}" file)
           cfg.configFile)
         (mapAttrs' (name: file: nameValuePair "${cfg.dataHome}/${name}" file)
