@@ -13,6 +13,7 @@ prev:
   # };
   rabbitmq_311 = prev.callPackage ./rabbitmq/3.11.nix {
     inherit (prev.darwin) AppKit Carbon Cocoa;
+    elixir = prev.elixir_1_15;
   };
   rabbitmq_312 = prev.rabbitmq-server;
   rabbitmq_313 = prev.callPackage ./rabbitmq/3.13.nix {
