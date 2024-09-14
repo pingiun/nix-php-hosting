@@ -122,6 +122,9 @@
 
       checks = forEachSupportedSystem
         ({ pkgs, ... }: with pkgs.lib;
+        {
+          project = pkgs.testers.runNixOSTest (import ./tests/project.nix ./modules/default.nix);
+        } //
         (mapAttrs'
           (name: value:
             nameValuePair

@@ -1,3 +1,4 @@
+projectModule:
 { pkgs, lib, ... }:
 {
   name = "magento-project";
@@ -5,10 +6,10 @@
   nodes = {
     machine =
       { pkgs, ... }: {
-        services.magento.projects.test = {
-          magentoVersion = "2.4.7";
-        };
+        imports = [ projectModule ];
+        projects.test = {
 
+        };
       };
   };
 
@@ -16,5 +17,6 @@
     start_all()
 
     machine.wait_for_unit("setup-project-test")
+    machine.succeed("cat /project/test/setup | grep Test")
   '';
 }

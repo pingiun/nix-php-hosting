@@ -101,6 +101,10 @@ in
           assertion = all (project: !(project.opensearchVersion != null && project.elasticsearchVersion != null)) (attrValues cfg.projects);
           message = "Both `opensearchVersion` and `elasticsearchVersion` can't be set at the same time.";
         }
+        {
+          assertion = all (project: project.opensearchVersion != null || project.elasticsearchVersion != null) (attrValues cfg.projects);
+          message = "Either `opensearchVersion` or `elasticsearchVersion` must be set.";
+        }
       ];
     }
     (mkIf (cfg.projects != { }) {
@@ -132,7 +136,7 @@ in
               TimeoutStartSec = "5m";
             };
             script = ''
-              echo "Test"
+              echo "Test" > "${config.users.users.${projectcfg.name}.home}/setup";
             '';
           }
         )
