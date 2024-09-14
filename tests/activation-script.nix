@@ -10,7 +10,7 @@ projectModule:
         imports = [ projectModule ];
         projects.test = {
           system.activationScripts.test = {
-            supportsDryActivation = true;
+            supportsDryActivation = false;
             text = ''
               echo "Test" > $HOME/setup
             '';
