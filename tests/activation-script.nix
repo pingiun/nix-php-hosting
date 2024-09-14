@@ -11,6 +11,12 @@ projectModule:
         projects.test = {
 
         };
+        system.activationScripts.test = {
+          supportsDryActivation = true;
+          text = ''
+            echo "Test" > $HOME/setup
+          '';
+        };
       };
   };
 

@@ -177,7 +177,7 @@
         { pkgs, ... }:
         with pkgs.lib;
         {
-          project = pkgs.testers.runNixOSTest (import ./tests/project.nix ./modules/default.nix);
+          project = pkgs.testers.runNixOSTest (import ./tests/activation-script.nix ./modules/default.nix);
         }
         // (mapAttrs' (
           name: value:

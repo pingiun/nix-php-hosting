@@ -9,8 +9,8 @@ let
 
       echo "$activationScript" > $out/activate
       echo "$dryActivationScript" > $out/dry-activate
-      subtituteInPlace $out/activate --subst-var out
-      subtituteInPlace $out/dry-activate --subst-var out
+      substituteInPlace $out/activate --subst-var out
+      substituteInPlace $out/dry-activate --subst-var out
       chmod u+x $out/activate $out/dry-activate
     '';
 
@@ -26,22 +26,16 @@ let
     buildCommand = systemBuilder;
 
     activationScript = config.system.activationScripts.script;
-    dryActivationScript = config.system.dryActivationScript.script;
+    dryActivationScript = config.system.dryActivationScript;
   });
 
   # Handle assertions and warnings
 
   failedAssertions = map (x: x.message) (filter (x: !x.assertion) config.assertions);
 
-  baseSystemAssertWarn = if failedAssertions != []
+  system = if failedAssertions != []
     then throw "\nFailed assertions:\n${concatStringsSep "\n" (map (x: "- ${x}") failedAssertions)}"
     else showWarnings config.warnings baseSystem;
-
-  # Replace runtime dependencies
-  system = foldr ({ oldDependency, newDependency }: drv:
-      pkgs.replaceDependency { inherit oldDependency newDependency drv; }
-    ) baseSystemAssertWarn config.system.replaceRuntimeDependencies;
-
 in
 
 {
