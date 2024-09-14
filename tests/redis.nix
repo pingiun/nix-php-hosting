@@ -33,7 +33,7 @@
   testScript =
     { nodes, ... }:
     let
-      inherit (nodes.machine.config.services) redis;
+      inherit (nodes.machine.services) redis;
     in
     ''
       start_all()
