@@ -1,7 +1,6 @@
 nixpkgs:
 
-final:
-prev:
+final: prev:
 
 let
 
@@ -12,10 +11,9 @@ in
   mysql57 = prev.callPackage ./mysql/5.7.nix {
     inherit (prev.darwin) cctools developer_cmds;
     inherit (prev.darwin.apple_sdk.frameworks) CoreServices;
-    boost = prev.callPackage ./boost/1.59.nix {};
-    protobuf = prev.callPackage ./protobuf/3.7.nix {};
+    boost = prev.callPackage ./boost/1.59.nix { };
+    protobuf = prev.callPackage ./protobuf/3.7.nix { };
     openssl = prev.openssl_1_1;
   };
-  mysql80 = prev.mysql80.override {
-  };
+  mysql80 = prev.mysql80.override { };
 }

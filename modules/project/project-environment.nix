@@ -1,4 +1,10 @@
-{ nixosConfig, config, lib, pkgs, ... }:
+{
+  nixosConfig,
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -33,10 +39,10 @@ in
         The home directory of the project user
       '';
     };
-  }
+  };
 
   config = {
     project.username = cfg.name;
     project.homeDirectory = nixosConfig.users.users.${cfg.name}.home;
-  }
+  };
 }

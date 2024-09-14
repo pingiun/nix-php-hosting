@@ -1,9 +1,10 @@
-{ callPackage
-, AppKit
-, Carbon
-, Cocoa
-, erlangR24
-, elixir_1_12
+{
+  callPackage,
+  AppKit,
+  Carbon,
+  Cocoa,
+  erlangR24,
+  elixir_1_12,
 }:
 callPackage ./generic.nix {
   version = "3.9.14";

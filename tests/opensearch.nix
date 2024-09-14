@@ -1,9 +1,12 @@
-{ pkgs, lib, ... }: {
+{ pkgs, lib, ... }:
+{
   name = "opensearch";
   meta.maintainers = with pkgs.lib.maintainers; [ shyim ];
 
   nodes.machine =
-    { config, ... }: with lib; {
+    { config, ... }:
+    with lib;
+    {
       virtualisation.memorySize = 2048;
       services.opensearch.enable = true;
     };

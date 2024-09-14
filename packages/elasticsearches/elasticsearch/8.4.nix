@@ -1,14 +1,15 @@
-{ elk7Version
-, lib
-, stdenv
-, fetchurl
-, makeWrapper
-, jre_headless
-, util-linux
-, gnugrep
-, coreutils
-, autoPatchelfHook
-, zlib
+{
+  elk7Version,
+  lib,
+  stdenv,
+  fetchurl,
+  makeWrapper,
+  jre_headless,
+  util-linux,
+  gnugrep,
+  coreutils,
+  autoPatchelfHook,
+  zlib,
 }:
 
 with lib;
@@ -16,13 +17,12 @@ let
   info = splitString "-" stdenv.hostPlatform.system;
   arch = elemAt info 0;
   plat = elemAt info 1;
-  shas =
-    {
-      x86_64-linux   = "0mapyc5flp1qaidzarw3nmrbhsp2qm6mzc635w7krj568lsi996z";
-      x86_64-darwin  = "0yp2zjhvpnfb6an81w96v638lpr7qzq958sp7p4q2jnx1a1a9b3k";
-      aarch64-linux  = "09lcighnvbadx5vwnf2flf6kchqpzkcv1kw4fp3149rw6rzxhiw7";
-      aarch64-darwin = "0riq8314ln1vdc4jvraqrkxq6py9gimfxm39qzbjlnqc56f5mmki";
-    };
+  shas = {
+    x86_64-linux = "0mapyc5flp1qaidzarw3nmrbhsp2qm6mzc635w7krj568lsi996z";
+    x86_64-darwin = "0yp2zjhvpnfb6an81w96v638lpr7qzq958sp7p4q2jnx1a1a9b3k";
+    aarch64-linux = "09lcighnvbadx5vwnf2flf6kchqpzkcv1kw4fp3149rw6rzxhiw7";
+    aarch64-darwin = "0riq8314ln1vdc4jvraqrkxq6py9gimfxm39qzbjlnqc56f5mmki";
+  };
 in
 stdenv.mkDerivation rec {
   pname = "elasticsearch";
@@ -45,10 +45,15 @@ stdenv.mkDerivation rec {
       "ES_CLASSPATH=\"\$ES_CLASSPATH:$out/\$additional_classpath_directory/*\""
   '';
 
-  nativeBuildInputs = [ makeWrapper ]
-    ++ lib.optional (!stdenv.hostPlatform.isDarwin) autoPatchelfHook;
+  nativeBuildInputs = [
+    makeWrapper
+  ] ++ lib.optional (!stdenv.hostPlatform.isDarwin) autoPatchelfHook;
 
-  buildInputs = [ jre_headless util-linux zlib ];
+  buildInputs = [
+    jre_headless
+    util-linux
+    zlib
+  ];
 
   runtimeDependencies = [ zlib ];
 
@@ -62,18 +67,29 @@ stdenv.mkDerivation rec {
       --replace 'bin/elasticsearch-keystore' "$out/bin/elasticsearch-keystore"
 
     wrapProgram $out/bin/elasticsearch \
-      --prefix PATH : "${makeBinPath [ util-linux coreutils gnugrep ]}" \
+      --prefix PATH : "${
+        makeBinPath [
+          util-linux
+          coreutils
+          gnugrep
+        ]
+      }" \
       --set JAVA_HOME "${jre_headless}"
 
     wrapProgram $out/bin/elasticsearch-plugin --set JAVA_HOME "${jre_headless}"
   '';
 
-  passthru = { enableUnfree = true; };
+  passthru = {
+    enableUnfree = true;
+  };
 
   meta = {
     description = "Open Source, Distributed, RESTful Search Engine";
     license = licenses.elastic20;
     platforms = platforms.unix;
-    maintainers = with maintainers; [ apeschar basvandijk ];
+    maintainers = with maintainers; [
+      apeschar
+      basvandijk
+    ];
   };
 }

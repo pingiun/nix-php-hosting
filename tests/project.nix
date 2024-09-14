@@ -5,7 +5,8 @@ projectModule:
 
   nodes = {
     machine =
-      { pkgs, ... }: {
+      { pkgs, ... }:
+      {
         imports = [ projectModule ];
         projects.test = {
 

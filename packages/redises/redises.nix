@@ -1,6 +1,4 @@
-nixpkgs:
-final:
-prev:
+nixpkgs: final: prev:
 
 {
   redis_60 = prev.callPackage ./redis/6.0.nix { };

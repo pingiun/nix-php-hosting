@@ -1,4 +1,5 @@
-{ lib, ... }: {
+{ lib, ... }:
+{
   name = "redis";
   meta.maintainers = with lib.maintainers; [ flokli ];
 
@@ -10,17 +11,27 @@
         services.redis.servers."".enable = true;
         services.redis.servers."test".enable = true;
 
-        users.users = lib.listToAttrs (map
-          (suffix: lib.nameValuePair "member${suffix}" {
-            createHome = false;
-            description = "A member of the redis${suffix} group";
-            isNormalUser = true;
-            extraGroups = [ "redis${suffix}" ];
-          }) [ "" "-test" ]);
+        users.users = lib.listToAttrs (
+          map
+            (
+              suffix:
+              lib.nameValuePair "member${suffix}" {
+                createHome = false;
+                description = "A member of the redis${suffix} group";
+                isNormalUser = true;
+                extraGroups = [ "redis${suffix}" ];
+              }
+            )
+            [
+              ""
+              "-test"
+            ]
+        );
       };
   };
 
-  testScript = { nodes, ... }:
+  testScript =
+    { nodes, ... }:
     let
       inherit (nodes.machine.config.services) redis;
     in

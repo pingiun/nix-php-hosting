@@ -1,7 +1,6 @@
 nixpkgs:
 
-final:
-prev:
+final: prev:
 
 {
   # Currently not able to build these:
@@ -16,7 +15,5 @@ prev:
     elixir = prev.elixir_1_15;
   };
   rabbitmq_312 = prev.rabbitmq-server;
-  rabbitmq_313 = prev.callPackage ./rabbitmq/3.13.nix {
-    inherit (prev.darwin) AppKit Carbon Cocoa;
-  };
+  rabbitmq_313 = prev.callPackage ./rabbitmq/3.13.nix { inherit (prev.darwin) AppKit Carbon Cocoa; };
 }

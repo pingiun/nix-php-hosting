@@ -1,24 +1,25 @@
-{ lib
-, stdenv
-, fetchurl
-, fetchpatch
-, pcre
-, pcre2
-, jemalloc
-, libunwind
-, libxslt
-, groff
-, ncurses
-, pkg-config
-, readline
-, libedit
-, coreutils
-, python3
-, makeWrapper
-, nixosTests
-, version
-, hash
-, extraNativeBuildInputs ? [ ]
+{
+  lib,
+  stdenv,
+  fetchurl,
+  fetchpatch,
+  pcre,
+  pcre2,
+  jemalloc,
+  libunwind,
+  libxslt,
+  groff,
+  ncurses,
+  pkg-config,
+  readline,
+  libedit,
+  coreutils,
+  python3,
+  makeWrapper,
+  nixosTests,
+  version,
+  hash,
+  extraNativeBuildInputs ? [ ],
 }:
 stdenv.mkDerivation rec {
   pname = "varnish";
@@ -29,19 +30,25 @@ stdenv.mkDerivation rec {
     inherit hash;
   };
 
-  nativeBuildInputs = with python3.pkgs; [ pkg-config docutils sphinx makeWrapper ];
-  buildInputs = [
-    libxslt
-    groff
-    ncurses
-    readline
-    libedit
-    python3
-  ]
-  ++ lib.optional (lib.versionOlder version "7") pcre
-  ++ lib.optional (lib.versionAtLeast version "7") pcre2
-  ++ lib.optional stdenv.hostPlatform.isDarwin libunwind
-  ++ lib.optional stdenv.hostPlatform.isLinux jemalloc;
+  nativeBuildInputs = with python3.pkgs; [
+    pkg-config
+    docutils
+    sphinx
+    makeWrapper
+  ];
+  buildInputs =
+    [
+      libxslt
+      groff
+      ncurses
+      readline
+      libedit
+      python3
+    ]
+    ++ lib.optional (lib.versionOlder version "7") pcre
+    ++ lib.optional (lib.versionAtLeast version "7") pcre2
+    ++ lib.optional stdenv.hostPlatform.isDarwin libunwind
+    ++ lib.optional stdenv.hostPlatform.isLinux jemalloc;
 
   buildFlags = [ "localstatedir=/var/spool" ];
 
@@ -56,11 +63,16 @@ stdenv.mkDerivation rec {
   # https://github.com/varnishcache/varnish-cache/issues/1875
   env.NIX_CFLAGS_COMPILE = lib.optionalString stdenv.isi686 "-fexcess-precision=standard";
 
-  outputs = [ "out" "dev" "man" ];
+  outputs = [
+    "out"
+    "dev"
+    "man"
+  ];
 
   passthru = {
     python = python3;
-    tests = nixosTests."varnish${builtins.replaceStrings [ "." ] [ "" ] (lib.versions.majorMinor version)}";
+    tests =
+      nixosTests."varnish${builtins.replaceStrings [ "." ] [ "" ] (lib.versions.majorMinor version)}";
   };
 
   meta = with lib; {

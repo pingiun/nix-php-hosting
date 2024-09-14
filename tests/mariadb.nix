@@ -2,12 +2,16 @@
 {
   name = "mysql";
   meta = with lib.maintainers; {
-    maintainers = [ ajs124 das_j ];
+    maintainers = [
+      ajs124
+      das_j
+    ];
   };
 
   nodes = {
     machine =
-      { pkgs, ... }: {
+      { pkgs, ... }:
+      {
 
         users = {
           groups.testusers = { };
@@ -26,7 +30,10 @@
         services.mysql = {
           enable = true;
           initialDatabases = [
-            { name = "testdb3"; schema = ./testdb.sql; }
+            {
+              name = "testdb3";
+              schema = ./testdb.sql;
+            }
           ];
           # note that using pkgs.writeText here is generally not a good idea,
           # as it will store the password in world-readable /nix/store ;)
@@ -35,19 +42,24 @@
             GRANT ALL PRIVILEGES ON testdb3.* TO 'testuser3'@'localhost';
           '';
 
-          ensureDatabases = [ "testdb" "testdb2" ];
-          ensureUsers = [{
-            name = "testuser";
-            ensurePermissions = {
-              "testdb.*" = "ALL PRIVILEGES";
-            };
-          }
+          ensureDatabases = [
+            "testdb"
+            "testdb2"
+          ];
+          ensureUsers = [
+            {
+              name = "testuser";
+              ensurePermissions = {
+                "testdb.*" = "ALL PRIVILEGES";
+              };
+            }
             {
               name = "testuser2";
               ensurePermissions = {
                 "testdb2.*" = "ALL PRIVILEGES";
               };
-            }];
+            }
+          ];
           package = pkgs.mariadb;
         };
       };

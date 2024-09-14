@@ -1,7 +1,8 @@
-{ callPackage
-, AppKit
-, Carbon
-, Cocoa
+{
+  callPackage,
+  AppKit,
+  Carbon,
+  Cocoa,
 }:
 callPackage ./generic.nix {
   version = "3.11.35";
