@@ -12,6 +12,8 @@ let
       substituteInPlace $out/activate --subst-var out
       substituteInPlace $out/dry-activate --subst-var out
       chmod u+x $out/activate $out/dry-activate
+
+      ln -s ${config.project-files} $out/project-files
     '';
 
   # Putting it all together.  This builds a store path containing

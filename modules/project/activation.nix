@@ -1,5 +1,6 @@
 # generate the script used to activate the configuration.
 {
+  nixosConfig,
   config,
   lib,
   pkgs,
@@ -50,7 +51,11 @@ let
     ''
       #!${pkgs.runtimeShell}
 
+      set -x
+
+      oldGenPath="/run/user/$UID/current-project"
       projectConfig='@out@'
+      newGenPath="$projectConfig"
 
       export PATH=/empty
       for i in ${toString path}; do
@@ -63,6 +68,8 @@ let
       # Ensure a consistent umask.
       umask 0022
 
+      ${builtins.readFile ./home-manager-lib.sh}
+
       ${textClosureMap id (withDrySnippets) (attrNames withDrySnippets)}
 
     ''
@@ -71,7 +78,7 @@ let
       # The readlink is there to ensure that when $projectConfig = /system
       # (which is a symlink to the store), /run/current-system is still
       # used as a garbage collection root.
-      #ln -sfn "$(readlink -f "$projectConfig")" /run/user/$UID/current-project
+      ln -sfn "$(readlink -f "$projectConfig")" /run/user/$UID/current-project
 
       exit $_status
     '';
@@ -85,6 +92,7 @@ let
       getent
       shadow
       nettools # needed for hostname
+      nixosConfig.nix.package
     ];
 
   scriptType =

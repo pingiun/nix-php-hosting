@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }:
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 
 with lib;
 
@@ -10,18 +15,17 @@ let
 
   homeManagerLib = builtins.readFile ./home-manager-lib.sh;
 
-  fileType = (import lib/file-type.nix {
-    inherit homeDirectory lib pkgs;
-  }).fileType;
+  fileType =
+    (import lib/file-type.nix {
+      inherit homeDirectory lib pkgs;
+    }).fileType;
 
-  sourceStorePath = file:
-    let
-      sourcePath = toString file.source;
-      sourceName = config.lib.strings.storeFileName (baseNameOf sourcePath);
-    in
-      if builtins.hasContext sourcePath
-      then file.source
-      else builtins.path { path = file.source; name = sourceName; };
+  make-project-files = pkgs.rustPlatform.buildRustPackage {
+    pname = "make-project-files";
+    version = "0.1.0";
+    src = ../../helpers/make-project-files;
+    cargoSha256 = lib.fakeHash;
+  };
 
 in
 
@@ -29,8 +33,8 @@ in
   options = {
     project.file = mkOption {
       description = "Attribute set of files to link into the user home.";
-      default = {};
-      type = fileType "home.file" "{env}`HOME`" homeDirectory;
+      default = { };
+      type = fileType "project.file" "{env}`HOME`" homeDirectory;
     };
 
     project-files = mkOption {
@@ -41,26 +45,29 @@ in
   };
 
   config = {
-    assertions = [(
-      let
-        dups =
-          attrNames
-            (filterAttrs (n: v: v > 1)
-            (foldAttrs (acc: v: acc + v) 0
-            (mapAttrsToList (n: v: { ${v.target} = 1; }) cfg)));
-        dupsStr = concatStringsSep ", " dups;
-      in {
-        assertion = dups == [];
-        message = ''
-          Conflicting managed target files: ${dupsStr}
+    assertions = [
+      (
+        let
+          dups = attrNames (
+            filterAttrs (n: v: v > 1) (
+              foldAttrs (acc: v: acc + v) 0 (mapAttrsToList (n: v: { ${v.target} = 1; }) cfg)
+            )
+          );
+          dupsStr = concatStringsSep ", " dups;
+        in
+        {
+          assertion = dups == [ ];
+          message = ''
+            Conflicting managed target files: ${dupsStr}
 
-          This may happen, for example, if you have a configuration similar to
+            This may happen, for example, if you have a configuration similar to
 
-              home.file = {
-                conflict1 = { source = ./foo.nix; target = "baz"; };
-                conflict2 = { source = ./bar.nix; target = "baz"; };
-              }'';
-      })
+                project.file = {
+                  conflict1 = { source = ./foo.nix; target = "baz"; };
+                  conflict2 = { source = ./bar.nix; target = "baz"; };
+                }'';
+        }
+      )
     ];
 
     # This activation script will
@@ -117,7 +124,7 @@ in
 
           # A symbolic link whose target path matches this pattern will be
           # considered part of a Home Manager generation.
-          homeFilePattern="$(readlink -e ${escapeShellArg builtins.storeDir})/*-home-manager-files/*"
+          homeFilePattern="$(readlink -e ${escapeShellArg builtins.storeDir})/*-project-files/*"
 
           newGenFiles="$1"
           shift 1
@@ -149,181 +156,69 @@ in
           done
         '';
       in
-        ''
-          function linkNewGen() {
-            _i "Creating home file links in %s" "$HOME"
-
-            local newGenFiles
-            newGenFiles="$(readlink -e "$newGenPath/project-files")"
-            find "$newGenFiles" \( -type f -or -type l \) \
-              -exec bash ${link} "$newGenFiles" {} +
-          }
-
-          function cleanOldGen() {
-            if [[ ! -v oldGenPath || ! -e "$oldGenPath/project-files" ]] ; then
-              return
-            fi
-
-            _i "Cleaning up orphan links from %s" "$HOME"
-
-            local newGenFiles oldGenFiles
-            newGenFiles="$(readlink -e "$newGenPath/project-files")"
-            oldGenFiles="$(readlink -e "$oldGenPath/project-files")"
-
-            # Apply the cleanup script on each leaf in the old
-            # generation. The find command below will print the
-            # relative path of the entry.
-            find "$oldGenFiles" '(' -type f -or -type l ')' -printf '%P\0' \
-              | xargs -0 bash ${cleanup} "$newGenFiles"
-          }
-
-          cleanOldGen
-
-          if [[ ! -v oldGenPath || "$oldGenPath" != "$newGenPath" ]] ; then
-            _i "Creating profile generation %s" $newGenNum
-            if [[ -e "$genProfilePath"/manifest.json ]] ; then
-              # Remove all packages from "$genProfilePath"
-              # `nix profile remove '.*' --profile "$genProfilePath"` was not working, so here is a workaround:
-              nix profile list --profile "$genProfilePath" \
-                | cut -d ' ' -f 4 \
-                | xargs -rt $DRY_RUN_CMD nix profile remove $VERBOSE_ARG --profile "$genProfilePath"
-              run nix profile install $VERBOSE_ARG --profile "$genProfilePath" "$newGenPath"
-            else
-              run nix-env $VERBOSE_ARG --profile "$genProfilePath" --set "$newGenPath"
-            fi
-
-            run --quiet nix-store --realise "$newGenPath" --add-root "$newGenGcPath" --indirect
-            if [[ -e "$legacyGenGcPath" ]]; then
-              run rm $VERBOSE_ARG "$legacyGenGcPath"
-            fi
-          else
-            _i "No change so reusing latest profile generation %s" "$oldGenNum"
-          fi
-
-          linkNewGen
-        ''
-    );
-
-    system.activationScripts.checkFilesChanged = (
-      let
-        homeDirArg = escapeShellArg homeDirectory;
-      in ''
-        function _cmp() {
-          if [[ -d $1 && -d $2 ]]; then
-            diff -rq "$1" "$2" &> /dev/null
-          else
-            cmp --quiet "$1" "$2"
-          fi
-        }
-        declare -A changedFiles
-      '' + concatMapStrings (v:
-        let
-          sourceArg = escapeShellArg (sourceStorePath v);
-          targetArg = escapeShellArg v.target;
-        in ''
-          _cmp ${sourceArg} ${homeDirArg}/${targetArg} \
-            && changedFiles[${targetArg}]=0 \
-            || changedFiles[${targetArg}]=1
-        '') (filter (v: v.onChange != "") (attrValues cfg))
-      + ''
-        unset -f _cmp
       ''
-    );
+        function linkNewGen() {
+          _i "Creating home file links in %s" "$HOME"
 
-    system.activationScripts.onFilesChange = (
-      concatMapStrings (v: ''
-        if (( ''${changedFiles[${escapeShellArg v.target}]} == 1 )); then
-          if [[ -v DRY_RUN || -v VERBOSE ]]; then
-            echo "Running onChange hook for" ${escapeShellArg v.target}
+          local newGenFiles
+          newGenFiles="$(readlink -e "$newGenPath/project-files")"
+          find "$newGenFiles" \( -type f -or -type l \) \
+            -exec bash ${link} "$newGenFiles" {} +
+        }
+
+        function cleanOldGen() {
+          if [[ ! -v oldGenPath || ! -e "$oldGenPath/project-files" ]] ; then
+            return
           fi
-          if [[ ! -v DRY_RUN ]]; then
-            ${v.onChange}
+
+          _i "Cleaning up orphan links from %s" "$HOME"
+
+          local newGenFiles oldGenFiles
+          newGenFiles="$(readlink -e "$newGenPath/project-files")"
+          oldGenFiles="$(readlink -e "$oldGenPath/project-files")"
+
+          # Apply the cleanup script on each leaf in the old
+          # generation. The find command below will print the
+          # relative path of the entry.
+          find "$oldGenFiles" '(' -type f -or -type l ')' -printf '%P\0' \
+            | xargs -0 bash ${cleanup} "$newGenFiles"
+        }
+
+        cleanOldGen
+
+        if [[ ! -v oldGenPath || "$oldGenPath" != "$newGenPath" ]] ; then
+          _i "Creating profile generation %s" $newGenNum
+          if [[ -e "$genProfilePath"/manifest.json ]] ; then
+            # Remove all packages from "$genProfilePath"
+            # `nix profile remove '.*' --profile "$genProfilePath"` was not working, so here is a workaround:
+            nix profile list --profile "$genProfilePath" \
+              | cut -d ' ' -f 4 \
+              | xargs -rt $DRY_RUN_CMD nix profile remove $VERBOSE_ARG --profile "$genProfilePath"
+            run nix profile install $VERBOSE_ARG --profile "$genProfilePath" "$newGenPath"
+          else
+            run nix-env $VERBOSE_ARG --profile "$genProfilePath" --set "$newGenPath"
           fi
+
+          run --quiet nix-store --realise "$newGenPath" --add-root "$newGenGcPath" --indirect
+          if [[ -e "$legacyGenGcPath" ]]; then
+            run rm $VERBOSE_ARG "$legacyGenGcPath"
+          fi
+        else
+          _i "No change so reusing latest profile generation %s" "$oldGenNum"
         fi
-      '') (filter (v: v.onChange != "") (attrValues cfg))
+
+        linkNewGen
+      ''
     );
 
     # Symlink directories and files that have the right execute bit.
     # Copy files that need their execute bit changed.
-    project-files = pkgs.runCommandLocal
-      "home-manager-files"
-      {
-        nativeBuildInputs = [ pkgs.xorg.lndir ];
-      }
-      (''
-        mkdir -p $out
-
-        # Needed in case /nix is a symbolic link.
-        realOut="$(realpath -m "$out")"
-
-        function insertFile() {
-          local source="$1"
-          local relTarget="$2"
-          local executable="$3"
-          local recursive="$4"
-
-          # If the target already exists then we have a collision. Note, this
-          # should not happen due to the assertion found in the 'files' module.
-          # We therefore simply log the conflict and otherwise ignore it, mainly
-          # to make the `files-target-config` test work as expected.
-          if [[ -e "$realOut/$relTarget" ]]; then
-            echo "File conflict for file '$relTarget'" >&2
-            return
-          fi
-
-          # Figure out the real absolute path to the target.
-          local target
-          target="$(realpath -m "$realOut/$relTarget")"
-
-          # Target path must be within $HOME.
-          if [[ ! $target == $realOut* ]] ; then
-            echo "Error installing file '$relTarget' outside \$HOME" >&2
-            exit 1
-          fi
-
-          mkdir -p "$(dirname "$target")"
-          if [[ -d $source ]]; then
-            if [[ $recursive ]]; then
-              mkdir -p "$target"
-              lndir -silent "$source" "$target"
-            else
-              ln -s "$source" "$target"
-            fi
-          else
-            [[ -x $source ]] && isExecutable=1 || isExecutable=""
-
-            # Link the file into the home file directory if possible,
-            # i.e., if the executable bit of the source is the same we
-            # expect for the target. Otherwise, we copy the file and
-            # set the executable bit to the expected value.
-            if [[ $executable == inherit || $isExecutable == $executable ]]; then
-              ln -s "$source" "$target"
-            else
-              cp "$source" "$target"
-
-              if [[ $executable == inherit ]]; then
-                # Don't change file mode if it should match the source.
-                :
-              elif [[ $executable ]]; then
-                chmod +x "$target"
-              else
-                chmod -x "$target"
-              fi
-            fi
-          fi
-        }
-      '' + concatStrings (
-        mapAttrsToList (n: v: ''
-          insertFile ${
-            escapeShellArgs [
-              (sourceStorePath v)
-              v.target
-              (if v.executable == null
-               then "inherit"
-               else toString v.executable)
-              (toString v.recursive)
-            ]}
-        '') cfg
-      ));
+    project-files = pkgs.runCommandLocal "project-files" { } ''
+      exec ${make-project-files}/bin/make-project-files ${builtins.toJSON (map (f: {
+        target = f.target;
+        source = "${f.source}";
+        executable = f.executable;
+      }) cfg)} $out
+    '';
   };
 }

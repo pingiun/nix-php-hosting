@@ -59,17 +59,7 @@ function _i() {
     shift
 
     # shellcheck disable=2059
-    printf "$(gettext "$msgid")\n" "$@"
-}
-
-function _ip() {
-    local msgid="$1"
-    local msgidPlural="$2"
-    local count="$3"
-    shift 3
-
-    # shellcheck disable=2059
-    printf "$(ngettext "$msgid" "$msgidPlural" "$count")\n" "$@"
+    printf "$msgid\n" "$@"
 }
 
 function _iError() {
