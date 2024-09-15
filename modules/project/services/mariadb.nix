@@ -39,7 +39,7 @@ in
 
       user = mkOption {
         type = types.str;
-        default = "mysql";
+        default = config.project.username;
         description = ''
           User account under which MySQL runs.
 
@@ -68,6 +68,7 @@ in
       dataDir = mkOption {
         type = types.path;
         example = "/var/lib/mysql";
+        readOnly = true;
         description = ''
           The data directory for MySQL.
 
@@ -293,8 +294,7 @@ in
 
   config = mkIf cfg.enable {
 
-    services.mysql.dataDir =
-      mkDefault config.xdg.dataHome + "/mysql";
+    services.mysql.dataDir = (config.xdg.stateHome + "/mysql");
 
     services.mysql.settings.mysqld = mkMerge [
       {
@@ -334,12 +334,12 @@ in
 
       preStart = if isMariaDB then ''
         if ! test -e ${cfg.dataDir}/mysql; then
-          ${cfg.package}/bin/mysql_install_db --defaults-file=/etc/my.cnf ${mysqldOptions}
+          ${cfg.package}/bin/mysql_install_db --defaults-file=${cfg.configFile} ${mysqldOptions}
           touch ${cfg.dataDir}/mysql_init
         fi
       '' else ''
         if ! test -e ${cfg.dataDir}/mysql; then
-          ${cfg.package}/bin/mysqld --defaults-file=/etc/my.cnf ${mysqldOptions} --initialize-insecure
+          ${cfg.package}/bin/mysqld --defaults-file=${cfg.configFile} ${mysqldOptions} --initialize-insecure
           touch ${cfg.dataDir}/mysql_init
         fi
       '';
@@ -353,7 +353,7 @@ in
         fi
 
         # The last two environment variables are used for starting Galera clusters
-        exec ${cfg.package}/bin/mysqld --defaults-file=/etc/my.cnf ${mysqldOptions} $_WSREP_NEW_CLUSTER $_WSREP_START_POSITION
+        exec ${cfg.package}/bin/mysqld --defaults-file=${cfg.configFile} ${mysqldOptions} $_WSREP_NEW_CLUSTER $_WSREP_START_POSITION
       '';
 
       postStart = let
@@ -482,11 +482,9 @@ in
           PrivateMounts = true;
           # System Call Filtering
           SystemCallArchitectures = "native";
-        }
-        (mkIf (cfg.dataDir == "/var/lib/mysql") {
           StateDirectory = "mysql";
           StateDirectoryMode = "0700";
-        })
+        }
       ];
     };
   };

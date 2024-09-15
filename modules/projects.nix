@@ -82,6 +82,9 @@ in
           };
         }) cfg.projects;
         systemd.tmpfiles.rules = [ "d /project 0755 root root" ];
+        systemd.user.tmpfiles.rules = [
+          "d %h/.local/share 0700 - -"
+        ];
       })
 
       (mkIf (cfg.projects != { }) {

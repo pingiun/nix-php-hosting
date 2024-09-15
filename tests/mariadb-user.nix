@@ -9,7 +9,10 @@ projectModule:
       {
         imports = [ projectModule ];
         projects.test = {
-          services.mysql.enable = true;
+          services.mysql = {
+            enable = true;
+            package = pkgs.mariadb_106;
+          };
         };
       };
   };
@@ -17,7 +20,8 @@ projectModule:
   testScript = ''
     start_all()
 
-    machine.wait_for_unit("mysql.service")
+    machine.wait_for_unit("linger-users.service")
+    machine.wait_for_unit("mysql.service", "test")
     # machine.succeed("cat /project/test/testing | grep Test")
   '';
 }
