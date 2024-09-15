@@ -232,13 +232,15 @@
 
       nixosConfigurations.basic-test = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        imports = [
+        modules = [
           self.nixosModules.default
+          {
+            # Allow root login without password
+            users.users.root = {
+              password = "";
+            };
+          }
         ];
-        # Allow root login without password
-        users.users.root = {
-          password = "";
-        };
       };
 
       # Development environments
