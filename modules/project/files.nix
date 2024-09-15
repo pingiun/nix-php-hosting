@@ -24,7 +24,7 @@ let
     pname = "make-project-files";
     version = "0.1.0";
     src = ../../helpers/make-project-files;
-    cargoSha256 = lib.fakeHash;
+    cargoSha256 = "sha256-mGUl18r5kBzxNgwpzGc7ndc72liLyMAufK8vCiir4Bw=";
   };
 
 in
@@ -199,7 +199,7 @@ in
             run nix-env $VERBOSE_ARG --profile "$genProfilePath" --set "$newGenPath"
           fi
 
-          run --quiet nix-store --realise "$newGenPath" --add-root "$newGenGcPath" --indirect
+          # run --quiet nix-store --realise "$newGenPath" --add-root "$newGenGcPath" --indirect
           if [[ -e "$legacyGenGcPath" ]]; then
             run rm $VERBOSE_ARG "$legacyGenGcPath"
           fi
@@ -213,12 +213,23 @@ in
 
     # Symlink directories and files that have the right execute bit.
     # Copy files that need their execute bit changed.
-    project-files = pkgs.runCommandLocal "project-files" { } ''
-      exec ${make-project-files}/bin/make-project-files ${builtins.toJSON (map (f: {
+    # project-files = pkgs.runCommandLocal "project-files" { } ''
+    #   exec ${make-project-files}/bin/make-project-files '${builtins.toJSON (mapAttrsToList (name: f: {
+    #     target = f.target;
+    #     source = "${f.source}";
+    #     executable = f.executable;
+    #   }) cfg)}' $out
+    # '';
+
+    project-files = builtins.derivation {
+      name = "project-files";
+      builder = "${make-project-files}/bin/make-project-files";
+      system = pkgs.stdenv.buildPlatform.system;
+      args = [ "${builtins.toJSON (mapAttrsToList (name: f: {
         target = f.target;
         source = "${f.source}";
         executable = f.executable;
-      }) cfg)} $out
-    '';
+      }) cfg)}" ];
+    };
   };
 }

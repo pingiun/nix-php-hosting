@@ -37,6 +37,12 @@ impl <'de> serde::de::Visitor<'de> for ExecutableVisitor {
         }
     }
 
+    fn visit_unit<E>(self) -> Result<Self::Value, E>
+        where
+            E: serde::de::Error, {
+        Ok(Executable::Inherit)
+    }
+
     fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
         where
             E: serde::de::Error, {
@@ -59,7 +65,7 @@ struct NixFile {
 fn main() {
     // Parse the json in argv[1] using merde
     let inp = env::args().nth(1).expect("No input file given");
-    let out = env::args().nth(2).expect("No output directory given");
+    let out = env::var("out").expect("No output directory given");
     let nix_files: Vec<NixFile> = serde_json::from_str(&inp).expect("Invalid JSON");
 
     let out: PathBuf = out.into();

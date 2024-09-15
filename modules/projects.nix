@@ -11,6 +11,13 @@ let
 
   cfg = config;
 
+  unitFiles =
+    package:
+    pkgs.runCommand "unit-files" { } ''
+      mkdir -p $out/etc/xdg/systemd/user
+      ln -s ${package} $out/etc/xdg/systemd/user
+    '';
+
   projectModule = types.submoduleWith {
     description = "Project module";
     class = "project";
@@ -50,20 +57,17 @@ in
   config = (
     mkMerge [
       (mkIf (cfg.projects != { }) {
-        users.users = mapAttrs' (
-          name:
-          { ... }:
-          {
-            inherit name;
-            value = {
-              description = mkDefault "Project user";
-              isNormalUser = true;
-              createHome = true;
-              home = "/project/${name}";
-              linger = true;
-            };
-          }
-        ) cfg.projects;
+        users.users = mapAttrs' (name: projectCfg: {
+          inherit name;
+          value = {
+            description = mkDefault "Project user";
+            isNormalUser = true;
+            createHome = true;
+            home = "/project/${name}";
+            linger = true;
+            packages = [ (unitFiles projectCfg.system.build.systemd-units) ];
+          };
+        }) cfg.projects;
         systemd.tmpfiles.rules = [ "d /project 0755 root root" ];
       })
 

@@ -1,7 +1,7 @@
 projectModule:
 { pkgs, lib, ... }:
 {
-  name = "xdg-write";
+  name = "systemd-user-unit";
 
   nodes = {
     machine =
@@ -9,11 +9,7 @@ projectModule:
       {
         imports = [ projectModule ];
         projects.test = {
-          xdg.configFile.test = {
-            text = ''
-              Test
-            '';
-          };
+
         };
       };
   };

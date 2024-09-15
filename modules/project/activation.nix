@@ -93,6 +93,7 @@ let
       shadow
       nettools # needed for hostname
       nixosConfig.nix.package
+      bash
     ];
 
   scriptType =

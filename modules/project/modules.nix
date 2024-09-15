@@ -5,7 +5,8 @@ let
     ./files.nix
     ./project-environment.nix
     ./top-level.nix
-    ./xdg.nix
+    # ./xdg.nix
+    ./systemd-user.nix
     (pkgs.path + "/nixos/modules/misc/assertions.nix")
     (pkgs.path + "/nixos/modules/misc/meta.nix")
   ];

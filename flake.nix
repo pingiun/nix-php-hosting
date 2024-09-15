@@ -124,6 +124,7 @@
 
       nixosModules = {
         magento = import ./modules/magento.nix;
+        default = import ./modules/default.nix;
       };
 
       packages = forEachSupportedSystem (
@@ -178,7 +179,8 @@
         with pkgs.lib;
         {
           activation = pkgs.testers.runNixOSTest (import ./tests/activation-script.nix ./modules/default.nix);
-          xdg-write = pkgs.testers.runNixOSTest (import ./tests/xdg-write.nix ./modules/default.nix);
+          # xdg-write = pkgs.testers.runNixOSTest (import ./tests/xdg-write.nix ./modules/default.nix);
+          systemd-user-unit = pkgs.testers.runNixOSTest (import ./tests/systemd-user-unit.nix ./modules/default.nix);
         }
         // (mapAttrs' (
           name: value:
@@ -227,6 +229,13 @@
       );
 
       formatter = forEachDevSystem ({ pkgs, ... }: pkgs.nixfmt-rfc-style);
+
+      nixosConfigurations.basic-test = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          self.nixosModules.default
+        ];
+      };
 
       # Development environments
       devShells = forEachDevSystem (
