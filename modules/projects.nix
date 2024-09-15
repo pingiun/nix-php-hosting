@@ -78,7 +78,7 @@ in
             createHome = true;
             home = "/project/${name}";
             linger = true;
-            packages = [ (unitFiles projectCfg.systemd.units) ];
+            packages = [ (unitFiles projectCfg.systemd.units) ] ++ projectCfg.project.userPackages;
           };
         }) cfg.projects;
         systemd.tmpfiles.rules = [ "d /project 0755 root root" ];

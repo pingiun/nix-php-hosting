@@ -181,6 +181,7 @@
           activation = pkgs.testers.runNixOSTest (import ./tests/activation-script.nix ./modules/default.nix);
           # xdg-write = pkgs.testers.runNixOSTest (import ./tests/xdg-write.nix ./modules/default.nix);
           systemd-user-unit = pkgs.testers.runNixOSTest (import ./tests/systemd-user-unit.nix ./modules/default.nix);
+          mariadb-user = pkgs.testers.runNixOSTest (import ./tests/mariadb-user.nix ./modules/default.nix);
         }
         // (mapAttrs' (
           name: value:

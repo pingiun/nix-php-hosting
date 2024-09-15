@@ -4,9 +4,10 @@ let
     ./activation.nix
     ./files.nix
     ./project-environment.nix
-    ./top-level.nix
-    # ./xdg.nix
+    ./services/mariadb.nix
     ./systemd-user.nix
+    ./top-level.nix
+    ./xdg.nix
     (pkgs.path + "/nixos/modules/misc/assertions.nix")
     (pkgs.path + "/nixos/modules/misc/meta.nix")
   ];

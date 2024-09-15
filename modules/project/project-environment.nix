@@ -48,6 +48,14 @@ in
         Environment variables to set in the user's session
       '';
     };
+
+    project.userPackages = mkOption {
+      type = types.listOf types.package;
+      default = [ ];
+      description = ''
+        List of packages to install for the project user
+      '';
+    };
   };
 
   config = {
