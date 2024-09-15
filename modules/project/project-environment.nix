@@ -18,6 +18,7 @@ in
   options = {
     project.name = mkOption {
       type = types.str;
+      readOnly = true;
       description = ''
         The project name
       '';

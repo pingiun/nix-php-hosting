@@ -21,7 +21,7 @@ in
     nameValuePair ("setup-project-${utils.escapeSystemdPath projectcfg.project.name}") {
       description = "Setup project ${projectcfg.project.name}";
       wantedBy = [ "multi-user.target" ];
-      before = [ "systemd-user-sessions.service" ];
+      after = [ "systemd-user-sessions.service" ];
 
       unitConfig = {
         RequiresMountsFor = config.users.users.${projectcfg.project.name}.home;

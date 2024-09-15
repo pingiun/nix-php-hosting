@@ -9,7 +9,14 @@ projectModule:
       {
         imports = [ projectModule ];
         projects.test = {
+          systemd.services.testing = {
+            description = "Test service";
+            wantedBy = [ "default.target" ];
 
+            script = ''
+              echo Test > $HOME/testing
+            '';
+          };
         };
       };
   };
@@ -17,7 +24,7 @@ projectModule:
   testScript = ''
     start_all()
 
-    machine.wait_for_unit("setup-project-test")
-    machine.succeed("cat /project/test/.config/test | grep Test")
+    machine.wait_for_unit("multi-user.target")
+    machine.succeed("cat /project/test/testing | grep Test")
   '';
 }

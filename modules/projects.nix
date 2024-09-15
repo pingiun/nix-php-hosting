@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  utils,
   ...
 }:
 
@@ -11,11 +12,23 @@ let
 
   cfg = config;
 
+  inherit (utils.systemdUtils.lib)
+    generateUnits
+    ;
+
   unitFiles =
-    package:
+    units:
+    let
+      units-package = generateUnits {
+        type = "user";
+        inherit units;
+        upstreamUnits = [ ];
+        upstreamWants = [ ];
+      };
+    in
     pkgs.runCommand "unit-files" { } ''
       mkdir -p $out/etc/xdg/systemd
-      ln -s ${package}/user $out/etc/xdg/systemd/user
+      ln -s ${units-package} $out/etc/xdg/systemd/user
     '';
 
   projectModule = types.submoduleWith {
@@ -24,7 +37,7 @@ let
     specialArgs = {
       nixosConfig = config;
       modulesPath = builtins.toString ./project;
-      inherit pkgs;
+      inherit pkgs utils;
     };
     modules = [
       (
@@ -65,7 +78,7 @@ in
             createHome = true;
             home = "/project/${name}";
             linger = true;
-            packages = [ (unitFiles projectCfg.system.build.systemd-units) ];
+            packages = [ (unitFiles projectCfg.systemd.units) ];
           };
         }) cfg.projects;
         systemd.tmpfiles.rules = [ "d /project 0755 root root" ];
