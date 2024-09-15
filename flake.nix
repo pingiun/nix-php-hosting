@@ -235,10 +235,8 @@
         modules = [
           self.nixosModules.default
           {
-            # Allow root login without password
-            users.users.root = {
-              password = "";
-            };
+            services.mingetty.autologinUser = "test";
+            projects.test = { };
           }
         ];
       };

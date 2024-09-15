@@ -14,8 +14,8 @@ let
   unitFiles =
     package:
     pkgs.runCommand "unit-files" { } ''
-      mkdir -p $out/etc/xdg/systemd/user
-      ln -s ${package} $out/etc/xdg/systemd/user
+      mkdir -p $out/etc/xdg/systemd
+      ln -s ${package}/user $out/etc/xdg/systemd/user
     '';
 
   projectModule = types.submoduleWith {

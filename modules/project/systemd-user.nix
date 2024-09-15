@@ -10,13 +10,12 @@ in
 
 {
   config = {
-    system.build.systemd-units = pkgs.writeText "test-service.service" ''
+    system.build.systemd-units = pkgs.writeTextDir "user/testing.service" ''
       [Unit]
       Description=Test service
 
       [Service]
-      ExecStart=${pkgs.writeText "test-script.sh" ''
-        #!/bin/sh
+      ExecStart=${pkgs.writeShellScript "test-script.sh" ''
         echo "Test"
       ''}
       Type=oneshot
@@ -24,7 +23,7 @@ in
       TimeoutStartSec=5m
 
       [Install]
-      WantedBy=multi-user.target
+      WantedBy=default.target
     '';
   };
 }
