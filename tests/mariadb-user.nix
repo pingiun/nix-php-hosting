@@ -11,7 +11,7 @@ projectModule:
         projects.test = {
           services.mysql = {
             enable = true;
-            package = pkgs.mariadb_106;
+            package = pkgs.phpHosting.mariadb."10.6";
           };
         };
       };
@@ -20,8 +20,9 @@ projectModule:
   testScript = ''
     start_all()
 
-    machine.wait_for_unit("linger-users.service")
+    machine.wait_for_unit("setup-project-test.service")
     machine.wait_for_unit("mysql.service", "test")
-    # machine.succeed("cat /project/test/testing | grep Test")
+    machine.succeed("su - test -c 'echo \"create database testing; connect testing; create table test (name int); insert into test (name) values (1);\" | mysql'")
+    machine.succeed("su - test -c 'echo \"select * from test;\" | mysql testing | grep 1'")
   '';
 }

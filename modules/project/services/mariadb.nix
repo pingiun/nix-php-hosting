@@ -344,8 +344,6 @@ in
         mysql_runtime_dir=$RUNTIME_DIRECTORY
         mysql_config_dir=$CONFIGURATION_DIRECTORY
 
-        ls -al $RUNTIME_DIRECTORY
-
         # mkdir ''${mysql_runtime_dir}
         # mkdir -p ''${mysql_config_dir}
 
@@ -476,35 +474,35 @@ in
 
           # Runtime directory and mode
           RuntimeDirectory = "mysqld";
-          RuntimeDirectoryMode = "0755";
+          RuntimeDirectoryMode = "0700";
           RuntimeDirectoryPreserve = "yes";
           ConfigurationDirectory = "mysql";
           ConfigurationDirectoryMode = "0700";
-          # Access write directories
-          # ReadWritePaths = [ cfg.dataDir "/run/user/1000" ];
-          # ReadOnlyPaths = [ "/" ];
-          # PermissionsStartOnly = true;
-          # # Capabilities
-          # CapabilityBoundingSet = "";
-          # # Security
-          # NoNewPrivileges = true;
-          # # Sandboxing
-          # ProtectSystem = "strict";
+          # Access write directories (datadir is automatically allowed via StateDirectory)
+          ReadWritePaths = [ ];
+          PermissionsStartOnly = true;
+          # Capabilities
+          CapabilityBoundingSet = "";
+          # Security
+          NoNewPrivileges = true;
+          # Sandboxing
+          ProtectSystem = "strict";
+          # Cannot be used as /run/user will be inaccessible, which is used for the socket
           # ProtectHome = true;
-          # PrivateTmp = true;
-          # PrivateDevices = true;
-          # ProtectHostname = true;
-          # ProtectKernelTunables = true;
-          # ProtectKernelModules = true;
-          # ProtectControlGroups = true;
-          # RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
-          # LockPersonality = true;
-          # MemoryDenyWriteExecute = true;
-          # RestrictRealtime = true;
-          # RestrictSUIDSGID = true;
-          # PrivateMounts = true;
-          # # System Call Filtering
-          # SystemCallArchitectures = "native";
+          PrivateTmp = true;
+          PrivateDevices = true;
+          ProtectHostname = true;
+          ProtectKernelTunables = true;
+          ProtectKernelModules = true;
+          ProtectControlGroups = true;
+          RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+          LockPersonality = true;
+          MemoryDenyWriteExecute = true;
+          RestrictRealtime = true;
+          RestrictSUIDSGID = true;
+          PrivateMounts = true;
+          # System Call Filtering
+          SystemCallArchitectures = "native";
           StateDirectory = "mysql";
           StateDirectoryMode = "0700";
         }

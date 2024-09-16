@@ -194,6 +194,7 @@ let
               ncurses
             ]
           }
+          wrapProgram $out/bin/mysql --add-flags '--defaults-file=''${XDG_CONFIG_HOME:-$HOME/.config}/mysql/my.cnf'
         '';
 
         passthru.tests =
@@ -247,8 +248,6 @@ let
               rm "$out"/lib/{libmariadb${libExt},libmysqlclient${libExt},libmysqlclient_r${libExt}}
               mv "$libmysqlclient_path" "$out"/lib/libmysqlclient${libExt}
               ln -sv libmysqlclient${libExt} "$out"/lib/libmysqlclient_r${libExt}
-
-              makeWrapper "$out"/bin/mysql --add-flags "--defaults-file=''${XDG_CONFIG_HOME:-$HOME/.config}/mysql/my.cnf"
             '';
         }
       );

@@ -48,71 +48,7 @@
                   ];
               };
               overlays = [
-                (import ./packages/phps/phps.nix nixpkgs)
-                (import ./packages/mysqls/mysqls.nix nixpkgs)
-                (import ./packages/mariadbs/mariadbs.nix nixpkgs)
-                (import ./packages/redises/redises.nix nixpkgs)
-                (import ./packages/varnishes/varnishes.nix nixpkgs)
-                (import ./packages/elasticsearches/elasticsearches.nix nixpkgs)
-                (import ./packages/opensearches/opensearches.nix nixpkgs)
-                (import ./packages/rabbitmqs/rabbitmqs.nix nixpkgs)
-                (final: prev: {
-                  phpHosting = {
-                    php = {
-                      "5.6" = prev.php56;
-                      "7.0" = prev.php70;
-                      "7.1" = prev.php71;
-                      "7.2" = prev.php72;
-                      "7.3" = prev.php73;
-                      "7.4" = prev.php74;
-                      "8.0" = prev.php80;
-                      "8.1" = prev.php81;
-                      "8.2" = prev.php82;
-                    };
-                    "8.3" = prev.php83;
-                    mariadb = {
-                      "10.4" = prev.mariadb_104;
-                      "10.6" = prev.mariadb_106;
-                    };
-                    mysql = {
-                      "5.7" = prev.mysql57;
-                      "8.0" = prev.mysql80;
-                    };
-                    redis = {
-                      "6.0" = prev.redis_60;
-                      "6.2" = prev.redis_62;
-                      "7.0" = prev.redis_70;
-                      "7.2" = prev.redis_72;
-                    };
-                    varnish = {
-                      "6.4" = prev.varnish64;
-                      "6.5" = prev.varnish65;
-                      "7.0" = prev.varnish70;
-                      "7.1" = prev.varnish71;
-                      "7.3" = prev.varnish73;
-                      "7.5" = prev.varnish75;
-                    };
-                    elasticsearch = {
-                      "7.9" = prev.elasticsearch_79;
-                      "7.16" = prev.elasticsearch_716;
-                      "7.17" = prev.elasticsearch_717;
-                      "8.4" = prev.elasticsearch_84;
-                      "8.5" = prev.elasticsearch_85;
-                      "8.11" = prev.elasticsearch_811;
-                    };
-                    opensearch = {
-                      "1.2" = prev.opensearch_12;
-                      "1.3" = prev.opensearch_13;
-                      "2.5" = prev.opensearch_25;
-                      "2.12" = prev.opensearch_212;
-                    };
-                    rabbitmq = {
-                      "3.11" = prev.rabbitmq_311;
-                      "3.12" = prev.rabbitmq_312;
-                      "3.13" = prev.rabbitmq_313;
-                    };
-                  };
-                })
+                self.overlays.default
               ];
             };
           }
@@ -126,6 +62,74 @@
         magento = import ./modules/magento.nix;
         default = import ./modules/default.nix;
       };
+
+      overlays.default = nixpkgs.lib.composeManyExtensions [
+        (import ./packages/phps/phps.nix nixpkgs)
+        (import ./packages/mysqls/mysqls.nix nixpkgs)
+        (import ./packages/mariadbs/mariadbs.nix nixpkgs)
+        (import ./packages/redises/redises.nix nixpkgs)
+        (import ./packages/varnishes/varnishes.nix nixpkgs)
+        (import ./packages/elasticsearches/elasticsearches.nix nixpkgs)
+        (import ./packages/opensearches/opensearches.nix nixpkgs)
+        (import ./packages/rabbitmqs/rabbitmqs.nix nixpkgs)
+        (final: prev: {
+          phpHosting = {
+            php = {
+              "5.6" = prev.php56;
+              "7.0" = prev.php70;
+              "7.1" = prev.php71;
+              "7.2" = prev.php72;
+              "7.3" = prev.php73;
+              "7.4" = prev.php74;
+              "8.0" = prev.php80;
+              "8.1" = prev.php81;
+              "8.2" = prev.php82;
+            };
+            "8.3" = prev.php83;
+            mariadb = {
+              "10.4" = prev.mariadb_104;
+              "10.6" = prev.mariadb_106;
+            };
+            mysql = {
+              "5.7" = prev.mysql57;
+              "8.0" = prev.mysql80;
+            };
+            redis = {
+              "6.0" = prev.redis_60;
+              "6.2" = prev.redis_62;
+              "7.0" = prev.redis_70;
+              "7.2" = prev.redis_72;
+            };
+            varnish = {
+              "6.4" = prev.varnish64;
+              "6.5" = prev.varnish65;
+              "7.0" = prev.varnish70;
+              "7.1" = prev.varnish71;
+              "7.3" = prev.varnish73;
+              "7.5" = prev.varnish75;
+            };
+            elasticsearch = {
+              "7.9" = prev.elasticsearch_79;
+              "7.16" = prev.elasticsearch_716;
+              "7.17" = prev.elasticsearch_717;
+              "8.4" = prev.elasticsearch_84;
+              "8.5" = prev.elasticsearch_85;
+              "8.11" = prev.elasticsearch_811;
+            };
+            opensearch = {
+              "1.2" = prev.opensearch_12;
+              "1.3" = prev.opensearch_13;
+              "2.5" = prev.opensearch_25;
+              "2.12" = prev.opensearch_212;
+            };
+            rabbitmq = {
+              "3.11" = prev.rabbitmq_311;
+              "3.12" = prev.rabbitmq_312;
+              "3.13" = prev.rabbitmq_313;
+            };
+          };
+        })
+      ];
 
       packages = forEachSupportedSystem (
         { pkgs, ... }:
@@ -183,7 +187,7 @@
           systemd-user-unit = pkgs.testers.runNixOSTest (
             import ./tests/systemd-user-unit.nix ./modules/default.nix
           );
-          # mariadb-user = pkgs.testers.runNixOSTest (import ./tests/mariadb-user.nix ./modules/default.nix);
+          mariadb-user = pkgs.testers.runNixOSTest (import ./tests/mariadb-user.nix ./modules/default.nix);
         }
         // (mapAttrs' (
           name: value:
@@ -240,11 +244,12 @@
           (
             { pkgs, ... }:
             {
+              nixpkgs.overlays = [ self.overlays.default ];
               services.mingetty.autologinUser = "test";
               projects.test = {
                 services.mysql = {
                   enable = true;
-                  package = pkgs.mariadb_106;
+                  package = pkgs.phpHosting.mariadb."10.6";
                 };
               };
             }
