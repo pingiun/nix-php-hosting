@@ -212,18 +212,16 @@
             { pkgs, ... }:
             {
               nixpkgs.overlays = [ self.overlays.default ];
-              services.mingetty.autologinUser = "test";
+              services.getty.autologinUser = "test";
               projects.test = {
                 services.mysql = {
                   enable = true;
                   package = pkgs.phpHosting.mariadb."10.6";
                 };
                 services.redis = {
-                  enable = true;
                   package = pkgs.phpHosting.redis."7.2";
                   servers.default = {
                     enable = true;
-                    unixSocket = "/run/user/1000/redis.sock";
                   };
                 };
               };

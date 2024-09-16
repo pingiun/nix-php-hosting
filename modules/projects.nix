@@ -79,8 +79,9 @@ in
             packages = [ (unitFiles projectCfg.systemd.units) ] ++ projectCfg.project.userPackages;
           };
         }) cfg.projects;
-        systemd.tmpfiles.rules = [ "d /project 0755 root root" ];
-        systemd.user.tmpfiles.rules = [ "d %h/.local/share 0700 - -" ];
+        systemd.tmpfiles.rules = [
+          "d /project 0755 root root"
+        ];
       })
 
       (mkIf (cfg.projects != { }) {

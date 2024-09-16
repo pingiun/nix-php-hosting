@@ -3,6 +3,7 @@
 with lib;
 
 let
+  projectCfg = config;
   cfg = config.services.redis;
 
   mkValueString = value:
@@ -64,7 +65,7 @@ in {
 
             unixSocket = mkOption {
               type = with types; nullOr path;
-              default = "/run/${redisName name}/redis.sock";
+              default = "/run/user/${projectCfg.project.name}/${redisName name}/redis.sock";
               defaultText = literalExpression ''
                 if name == "" then "/run/redis/redis.sock" else "/run/redis-''${name}/redis.sock"
               '';
@@ -222,7 +223,7 @@ in {
                   (d: "${toString (builtins.elemAt d 0)} ${toString (builtins.elemAt d 1)}")
                   config.save;
               dbfilename = "dump.rdb";
-              dir = "/var/lib/${redisName name}";
+              dir = "${projectCfg.xdg.stateHome}/${redisName name}";
               appendfsync = config.appendFsync;
               slowlog-log-slower-than = config.slowLogLogSlowerThan;
               slowlog-max-len = config.slowLogMaxLen;
@@ -257,39 +258,38 @@ in {
       '';
     }) enabledServers);
 
-    boot.kernel.sysctl = mkIf cfg.vmOverCommit {
-      "vm.overcommit_memory" = "1";
-    };
+    # boot.kernel.sysctl = mkIf cfg.vmOverCommit {
+    #   "vm.overcommit_memory" = "1";
+    # };
 
     project.userPackages = [ cfg.package ];
 
     systemd.services = mapAttrs' (name: conf: nameValuePair (redisName name) {
       description = "Redis Server - ${redisName name}";
 
-      wantedBy = [ "multi-user.target" ];
+      wantedBy = [ "default.target" ];
       after = [ "network.target" ];
 
       serviceConfig = {
-        ExecStart = "${cfg.package}/bin/${cfg.package.serverBin or "redis-server"} /var/lib/${redisName name}/redis.conf ${escapeShellArgs conf.extraParams}";
-        ExecStartPre = "+"+pkgs.writeShellScript "${redisName name}-prep-conf" (let
-          redisConfVar = "/var/lib/${redisName name}/redis.conf";
-          redisConfRun = "/run/${redisName name}/nixos.conf";
-          redisConfStore = redisConfig conf.settings;
-        in ''
-          touch "${redisConfVar}" "${redisConfRun}"
-          chown '${conf.user}' "${redisConfVar}" "${redisConfRun}"
-          chmod 0600 "${redisConfVar}" "${redisConfRun}"
-          if [ ! -s ${redisConfVar} ]; then
-            echo 'include "${redisConfRun}"' > "${redisConfVar}"
-          fi
-          echo 'include "${redisConfStore}"' > "${redisConfRun}"
-          ${optionalString (conf.requirePassFile != null) ''
-            {
-              echo -n "requirepass "
-              cat ${escapeShellArg conf.requirePassFile}
-            } >> "${redisConfRun}"
-          ''}
-        '');
+        ExecStart = "${cfg.package}/bin/${cfg.package.serverBin or "redis-server"} ${redisConfig conf.settings} ${escapeShellArgs conf.extraParams}";
+        # ExecStartPre = "+"+pkgs.writeShellScript "${redisName name}-prep-conf" (let
+        #   redisConfVar = "/var/lib/${redisName name}/redis.conf";
+        #   redisConfRun = "/run/${redisName name}/nixos.conf";
+        #   redisConfStore = redisConfig conf.settings;
+        # in ''
+        #   touch "${redisConfVar}" "${redisConfRun}"
+        #   chmod 0600 "${redisConfVar}" "${redisConfRun}"
+        #   if [ ! -s ${redisConfVar} ]; then
+        #     echo 'include "${redisConfRun}"' > "${redisConfVar}"
+        #   fi
+        #   echo 'include "${redisConfStore}"' > "${redisConfRun}"
+        #   ${optionalString (conf.requirePassFile != null) ''
+        #     {
+        #       echo -n "requirepass "
+        #       cat ${escapeShellArg conf.requirePassFile}
+        #     } >> "${redisConfRun}"
+        #   ''}
+        # '');
         Type = "notify";
 
         # Runtime directory and mode

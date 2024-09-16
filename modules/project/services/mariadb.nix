@@ -308,14 +308,14 @@ in
     services.mysql.dataDir = (config.xdg.stateHome + "/mysql");
 
     services.mysql.settings.client = {
-      socket = "@socketFile@";
+      socket = "/run/user/${config.project.username}/mysqld.sock";
     };
 
     services.mysql.settings.mysqld = mkMerge [
       {
         datadir = cfg.dataDir;
         port = mkDefault 3306;
-        socket = "@socketFile@";
+        socket = "/run/user/${config.project.username}/mysqld.sock";
         skip_networking = mkDefault "ON";
       }
       (mkIf (cfg.replication.role == "master" || cfg.replication.role == "slave") {
@@ -355,34 +355,20 @@ in
       ];
 
       preStart =
-        ''
-          XDG_RUNTIME_DIR=''${XDG_RUNTIME_DIR:-/run/user/$UID}
-          XDG_CONFIG_HOME=${config.xdg.configHome}
-
-          mysql_runtime_dir=$RUNTIME_DIRECTORY
-          mysql_config_dir=$CONFIGURATION_DIRECTORY
-
-          # mkdir ''${mysql_runtime_dir}
-          # mkdir -p ''${mysql_config_dir}
-
-          sed -e "s|@socketFile@|''${mysql_runtime_dir}/mysql.sock|" ${cfg.configFile} > ''${mysql_config_dir}/my.cnf
-        ''
-        + (
-          if isMariaDB then
-            ''
-              if ! test -e ${cfg.dataDir}/mysql; then
-                ${cfg.package}/bin/mysql_install_db --defaults-file=$mysql_config_dir/my.cnf ${mysqldOptions}
-                touch ${cfg.dataDir}/mysql_init
-              fi
-            ''
-          else
-            ''
-              if ! test -e ${cfg.dataDir}/mysql; then
-                ${cfg.package}/bin/mysqld --defaults-file=$mysql_config_dir/my.cnf ${mysqldOptions} --initialize-insecure
-                touch ${cfg.dataDir}/mysql_init
-              fi
-            ''
-        );
+        if isMariaDB then
+          ''
+            if ! test -e ${cfg.dataDir}/mysql; then
+              ${cfg.package}/bin/mysql_install_db --defaults-file=${cfg.configFile} ${mysqldOptions}
+              touch ${cfg.dataDir}/mysql_init
+            fi
+          ''
+        else
+          ''
+            if ! test -e ${cfg.dataDir}/mysql; then
+              ${cfg.package}/bin/mysqld --defaults-file=${cfg.configFile} ${mysqldOptions} --initialize-insecure
+              touch ${cfg.dataDir}/mysql_init
+            fi
+          '';
 
       script = ''
         # https://mariadb.com/kb/en/getting-started-with-mariadb-galera-cluster/#systemd-and-galera-recovery
@@ -393,7 +379,7 @@ in
         fi
 
         # The last two environment variables are used for starting Galera clusters
-        exec ${cfg.package}/bin/mysqld --defaults-file=${config.xdg.configHome}/mysql/my.cnf ${mysqldOptions} $_WSREP_NEW_CLUSTER $_WSREP_START_POSITION
+        exec ${cfg.package}/bin/mysqld --defaults-file=${cfg.configFile} ${mysqldOptions} $_WSREP_NEW_CLUSTER $_WSREP_START_POSITION
       '';
 
       postStart =
