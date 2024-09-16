@@ -15,10 +15,7 @@ let
 
   homeManagerLib = builtins.readFile ./home-manager-lib.sh;
 
-  fileType =
-    (import lib/file-type.nix {
-      inherit homeDirectory lib pkgs;
-    }).fileType;
+  fileType = (import lib/file-type.nix { inherit homeDirectory lib pkgs; }).fileType;
 
   make-project-files = pkgs.rustPlatform.buildRustPackage {
     pname = "make-project-files";
@@ -225,11 +222,15 @@ in
       name = "project-files";
       builder = "${make-project-files}/bin/make-project-files";
       system = pkgs.stdenv.buildPlatform.system;
-      args = [ "${builtins.toJSON (mapAttrsToList (name: f: {
-        target = f.target;
-        source = "${f.source}";
-        executable = f.executable;
-      }) cfg)}" ];
+      args = [
+        "${builtins.toJSON (
+          mapAttrsToList (name: f: {
+            target = f.target;
+            source = "${f.source}";
+            executable = f.executable;
+          }) cfg
+        )}"
+      ];
     };
   };
 }

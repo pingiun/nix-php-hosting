@@ -1,20 +1,24 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
 let
-  systemBuilder =
-    ''
-      mkdir $out
+  systemBuilder = ''
+    mkdir $out
 
-      echo "$activationScript" > $out/activate
-      echo "$dryActivationScript" > $out/dry-activate
-      substituteInPlace $out/activate --subst-var out
-      substituteInPlace $out/dry-activate --subst-var out
-      chmod u+x $out/activate $out/dry-activate
+    echo "$activationScript" > $out/activate
+    echo "$dryActivationScript" > $out/dry-activate
+    substituteInPlace $out/activate --subst-var out
+    substituteInPlace $out/dry-activate --subst-var out
+    chmod u+x $out/activate $out/dry-activate
 
-      ln -s ${config.project-files} $out/project-files
-    '';
+    ln -s ${config.project-files} $out/project-files
+  '';
 
   # Putting it all together.  This builds a store path containing
   # symlinks to the various parts of the built configuration (the
@@ -35,15 +39,15 @@ let
 
   failedAssertions = map (x: x.message) (filter (x: !x.assertion) config.assertions);
 
-  system = if failedAssertions != []
-    then throw "\nFailed assertions:\n${concatStringsSep "\n" (map (x: "- ${x}") failedAssertions)}"
-    else showWarnings config.warnings baseSystem;
+  system =
+    if failedAssertions != [ ] then
+      throw "\nFailed assertions:\n${concatStringsSep "\n" (map (x: "- ${x}") failedAssertions)}"
+    else
+      showWarnings config.warnings baseSystem;
 in
 
 {
-  imports = [
-    ../build.nix
-  ];
+  imports = [ ../build.nix ];
 
   options = {
 
@@ -60,7 +64,6 @@ in
     };
 
   };
-
 
   config = {
 

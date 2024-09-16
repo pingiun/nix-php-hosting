@@ -1,7 +1,4 @@
-{
-  callPackage,
-  darwin,
-}:
+{ callPackage, darwin }:
 
 (callPackage ./generic.nix {
   # Supported until 2026-07-06

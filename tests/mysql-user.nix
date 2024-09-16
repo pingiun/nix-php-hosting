@@ -11,14 +11,14 @@ projectModule:
         projects.test = {
           services.mysql = {
             enable = true;
-            package = pkgs.phpHosting.mariadb."10.6";
+            package = pkgs.phpHosting.mysql."8.0";
           };
         };
 
         projects.foo = {
           services.mysql = {
             enable = true;
-            package = pkgs.phpHosting.mariadb."10.6";
+            package = pkgs.phpHosting.mysql."8.0";
           };
         };
       };

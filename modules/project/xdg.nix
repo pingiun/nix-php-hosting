@@ -1,4 +1,10 @@
-{ options, config, lib, pkgs, ... }:
+{
+  options,
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -6,17 +12,19 @@ let
 
   cfg = config.xdg;
 
-  fileType = (import ./lib/file-type.nix {
-    inherit (config.project) homeDirectory;
-    inherit lib pkgs;
-  }).fileType;
+  fileType =
+    (import ./lib/file-type.nix {
+      inherit (config.project) homeDirectory;
+      inherit lib pkgs;
+    }).fileType;
 
   defaultCacheHome = "${config.project.homeDirectory}/.cache";
   defaultConfigHome = "${config.project.homeDirectory}/.config";
   defaultDataHome = "${config.project.homeDirectory}/.local/share";
   defaultStateHome = "${config.project.homeDirectory}/.local/state";
 
-in {
+in
+{
   options.xdg = {
     enable = mkEnableOption "management of XDG base directories";
 
@@ -48,8 +56,7 @@ in {
     };
 
     dataFile = mkOption {
-      type =
-        fileType "xdg.dataFile" "<varname>xdg.dataHome</varname>" cfg.dataHome;
+      type = fileType "xdg.dataFile" "<varname>xdg.dataHome</varname>" cfg.dataHome;
       default = { };
       description = ''
         Attribute set of files to link into the user's XDG
@@ -67,8 +74,7 @@ in {
     };
 
     stateFile = mkOption {
-      type = fileType "xdg.stateFile" "<varname>xdg.stateHome</varname>"
-        cfg.stateHome;
+      type = fileType "xdg.stateFile" "<varname>xdg.stateHome</varname>" cfg.stateHome;
       default = { };
       description = ''
         Attribute set of files to link into the user's XDG
@@ -87,32 +93,32 @@ in {
   };
 
   config = mkMerge [
-    (let
-      variables = {
-        XDG_CACHE_HOME = cfg.cacheHome;
-        XDG_CONFIG_HOME = cfg.configHome;
-        XDG_DATA_HOME = cfg.dataHome;
-        XDG_STATE_HOME = cfg.stateHome;
-      };
-    in {
-      xdg.cacheHome = mkDefault defaultCacheHome;
-      xdg.configHome = mkDefault defaultConfigHome;
-      xdg.dataHome = mkDefault defaultDataHome;
-      xdg.stateHome = mkDefault defaultStateHome;
+    (
+      let
+        variables = {
+          XDG_CACHE_HOME = cfg.cacheHome;
+          XDG_CONFIG_HOME = cfg.configHome;
+          XDG_DATA_HOME = cfg.dataHome;
+          XDG_STATE_HOME = cfg.stateHome;
+        };
+      in
+      {
+        xdg.cacheHome = mkDefault defaultCacheHome;
+        xdg.configHome = mkDefault defaultConfigHome;
+        xdg.dataHome = mkDefault defaultDataHome;
+        xdg.stateHome = mkDefault defaultStateHome;
 
-      project.sessionVariables = variables;
-      # systemd.user.sessionVariables =
+        project.sessionVariables = variables;
+        # systemd.user.sessionVariables =
         # mkIf pkgs.stdenv.hostPlatform.isLinux variables;
-    })
+      }
+    )
 
     {
       project.file = mkMerge [
-        (mapAttrs' (name: file: nameValuePair "${cfg.configHome}/${name}" file)
-          cfg.configFile)
-        (mapAttrs' (name: file: nameValuePair "${cfg.dataHome}/${name}" file)
-          cfg.dataFile)
-        (mapAttrs' (name: file: nameValuePair "${cfg.stateHome}/${name}" file)
-          cfg.stateFile)
+        (mapAttrs' (name: file: nameValuePair "${cfg.configHome}/${name}" file) cfg.configFile)
+        (mapAttrs' (name: file: nameValuePair "${cfg.dataHome}/${name}" file) cfg.dataFile)
+        (mapAttrs' (name: file: nameValuePair "${cfg.stateHome}/${name}" file) cfg.stateFile)
         { "${cfg.cacheHome}/.keep".text = ""; }
       ];
     }

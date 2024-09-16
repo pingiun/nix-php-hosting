@@ -47,9 +47,7 @@
                     "elasticsearch" # Required by Elasticsearch
                   ];
               };
-              overlays = [
-                self.overlays.default
-              ];
+              overlays = [ self.overlays.default ];
             };
           }
         );
@@ -188,49 +186,24 @@
             import ./tests/systemd-user-unit.nix ./modules/default.nix
           );
           mariadb-user = pkgs.testers.runNixOSTest (import ./tests/mariadb-user.nix ./modules/default.nix);
+          mysql-user = pkgs.testers.runNixOSTest (import ./tests/mysql-user.nix ./modules/default.nix);
         }
         // (mapAttrs' (
           name: value:
           nameValuePair "nixos-redis-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (
-              final: prev: {
-                redis = value;
-              }
-            )).testers.runNixOSTest
-              ./tests/redis.nix
+            (pkgs.extend (final: prev: { redis = value; })).testers.runNixOSTest ./tests/redis.nix
           )
         ) pkgs.phpHosting.redis)
         // (mapAttrs' (
           name: value:
           nameValuePair "nixos-mysql-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (
-              final: prev: {
-                mysql = value;
-              }
-            )).testers.runNixOSTest
-              ./tests/mysql.nix
+            (pkgs.extend (final: prev: { mysql = value; })).testers.runNixOSTest ./tests/mysql.nix
           )
         ) pkgs.phpHosting.mysql)
         // (mapAttrs' (
           name: value:
-          nameValuePair "nixos-mariadb-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (
-              final: prev: {
-                mariadb = value;
-              }
-            )).testers.runNixOSTest
-              ./tests/mariadb.nix
-          )
-        ) pkgs.phpHosting.mariadb)
-        // (mapAttrs' (
-          name: value:
           nameValuePair "nixos-opensearch-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (
-              final: prev: {
-                opensearch = value;
-              }
-            )).testers.runNixOSTest
-              ./tests/opensearch.nix
+            (pkgs.extend (final: prev: { opensearch = value; })).testers.runNixOSTest ./tests/opensearch.nix
           )
         ) pkgs.phpHosting.opensearch)
       );

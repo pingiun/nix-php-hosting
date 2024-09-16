@@ -12,9 +12,7 @@ let
 
   cfg = config;
 
-  inherit (utils.systemdUtils.lib)
-    generateUnits
-    ;
+  inherit (utils.systemdUtils.lib) generateUnits;
 
   unitFiles =
     units:
@@ -82,9 +80,7 @@ in
           };
         }) cfg.projects;
         systemd.tmpfiles.rules = [ "d /project 0755 root root" ];
-        systemd.user.tmpfiles.rules = [
-          "d %h/.local/share 0700 - -"
-        ];
+        systemd.user.tmpfiles.rules = [ "d %h/.local/share 0700 - -" ];
       })
 
       (mkIf (cfg.projects != { }) {
