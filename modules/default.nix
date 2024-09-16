@@ -27,17 +27,19 @@ in
         RequiresMountsFor = config.users.users.${projectcfg.project.name}.home;
       };
 
-      serviceConfig = let prestartScript = pkgs.writeShellScript "activate-pre-start" ''
-        ln -s /run/user/$(id -u ${projectcfg.project.username}) /run/user/${projectcfg.project.username}
-      '';
-      in
-      {
-        User = projectcfg.project.username;
-        Type = "oneshot";
-        RemainAfterExit = "yes";
-        TimeoutStartSec = "5m";
-        ExecStartPre = "!${prestartScript}";
-      };
+      serviceConfig =
+        let
+          prestartScript = pkgs.writeShellScript "activate-pre-start" ''
+            ln -s /run/user/$(id -u ${projectcfg.project.username}) /run/user/${projectcfg.project.username}
+          '';
+        in
+        {
+          User = projectcfg.project.username;
+          Type = "oneshot";
+          RemainAfterExit = "yes";
+          TimeoutStartSec = "5m";
+          ExecStartPre = "!${prestartScript}";
+        };
       script = ''
         ${projectcfg.system.build.toplevel}/activate
       '';

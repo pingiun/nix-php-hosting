@@ -79,7 +79,6 @@ let
       # (which is a symlink to the store), /run/current-system is still
       # used as a garbage collection root.
       ln -sfn "$(readlink -f "$projectConfig")" /run/user/$UID/current-project
-      ln -sfn /run/user/$UID /run/user/${config.project.name}
 
       exit $_status
     '';

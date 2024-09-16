@@ -19,7 +19,7 @@ projectModule:
   testScript =
     { nodes, ... }:
     let
-      inherit (nodes.machine.services) redis;
+      inherit (nodes.machine.projects.test.services) redis;
     in
     ''
       start_all()
