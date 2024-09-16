@@ -196,12 +196,6 @@
         ) pkgs.phpHosting.redis)
         // (mapAttrs' (
           name: value:
-          nameValuePair "nixos-mysql-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (final: prev: { mysql = value; })).testers.runNixOSTest ./tests/mysql.nix
-          )
-        ) pkgs.phpHosting.mysql)
-        // (mapAttrs' (
-          name: value:
           nameValuePair "nixos-opensearch-${replaceStrings [ "." ] [ "-" ] name}" (
             (pkgs.extend (final: prev: { opensearch = value; })).testers.runNixOSTest ./tests/opensearch.nix
           )
