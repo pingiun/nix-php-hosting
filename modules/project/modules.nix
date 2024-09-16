@@ -5,6 +5,7 @@ let
     ./files.nix
     ./project-environment.nix
     ./services/mariadb.nix
+    ./services/redis.nix
     ./systemd-user.nix
     ./top-level.nix
     ./xdg.nix
