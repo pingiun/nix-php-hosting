@@ -296,10 +296,15 @@ in
 
     services.mysql.dataDir = (config.xdg.stateHome + "/mysql");
 
+    services.mysql.settings.client = {
+      socket = "@socketFile@";
+    };
+
     services.mysql.settings.mysqld = mkMerge [
       {
         datadir = cfg.dataDir;
         port = mkDefault 3306;
+        socket = "@socketFile@";
       }
       (mkIf (cfg.replication.role == "master" || cfg.replication.role == "slave") {
         log-bin = "mysql-bin-${toString cfg.replication.serverId}";
@@ -320,7 +325,7 @@ in
     systemd.services.mysql = {
       description = "MySQL Server";
 
-      after = [ "network.target" ];
+      after = [ "network.target" "setup-project-${config.project.name}.service" ];
       wantedBy = [ "default.target" ];
       restartTriggers = [ cfg.configFile ];
 
@@ -332,17 +337,30 @@ in
         pkgs.nettools
       ];
 
-      preStart = if isMariaDB then ''
+      preStart = ''
+        XDG_RUNTIME_DIR=''${XDG_RUNTIME_DIR:-/run/user/$UID}
+        XDG_CONFIG_HOME=${config.xdg.configHome}
+
+        mysql_runtime_dir=$RUNTIME_DIRECTORY
+        mysql_config_dir=$CONFIGURATION_DIRECTORY
+
+        ls -al $RUNTIME_DIRECTORY
+
+        # mkdir ''${mysql_runtime_dir}
+        # mkdir -p ''${mysql_config_dir}
+
+        sed -e "s|@socketFile@|''${mysql_runtime_dir}/mysql.sock|" ${cfg.configFile} > ''${mysql_config_dir}/my.cnf
+      '' + (if isMariaDB then ''
         if ! test -e ${cfg.dataDir}/mysql; then
-          ${cfg.package}/bin/mysql_install_db --defaults-file=${cfg.configFile} ${mysqldOptions}
+          ${cfg.package}/bin/mysql_install_db --defaults-file=$mysql_config_dir/my.cnf ${mysqldOptions}
           touch ${cfg.dataDir}/mysql_init
         fi
       '' else ''
         if ! test -e ${cfg.dataDir}/mysql; then
-          ${cfg.package}/bin/mysqld --defaults-file=${cfg.configFile} ${mysqldOptions} --initialize-insecure
+          ${cfg.package}/bin/mysqld --defaults-file=$mysql_config_dir/my.cnf ${mysqldOptions} --initialize-insecure
           touch ${cfg.dataDir}/mysql_init
         fi
-      '';
+      '');
 
       script = ''
         # https://mariadb.com/kb/en/getting-started-with-mariadb-galera-cluster/#systemd-and-galera-recovery
@@ -353,7 +371,7 @@ in
         fi
 
         # The last two environment variables are used for starting Galera clusters
-        exec ${cfg.package}/bin/mysqld --defaults-file=${cfg.configFile} ${mysqldOptions} $_WSREP_NEW_CLUSTER $_WSREP_START_POSITION
+        exec ${cfg.package}/bin/mysqld --defaults-file=${config.xdg.configHome}/mysql/my.cnf ${mysqldOptions} $_WSREP_NEW_CLUSTER $_WSREP_START_POSITION
       '';
 
       postStart = let
@@ -362,7 +380,7 @@ in
       in ''
         ${optionalString (!hasNotify) ''
           # Wait until the MySQL server is available for use
-          while [ ! -e /run/mysqld/mysqld.sock ]
+          while [ ! -e $RUNTIME_DIRECTORY/mysqld.sock ]
           do
               echo "MySQL daemon not yet started. Waiting for 1 second..."
               sleep 1
@@ -459,29 +477,34 @@ in
           # Runtime directory and mode
           RuntimeDirectory = "mysqld";
           RuntimeDirectoryMode = "0755";
+          RuntimeDirectoryPreserve = "yes";
+          ConfigurationDirectory = "mysql";
+          ConfigurationDirectoryMode = "0700";
           # Access write directories
-          ReadWritePaths = [ cfg.dataDir ];
-          # Capabilities
-          CapabilityBoundingSet = "";
-          # Security
-          NoNewPrivileges = true;
-          # Sandboxing
-          ProtectSystem = "strict";
-          ProtectHome = true;
-          PrivateTmp = true;
-          PrivateDevices = true;
-          ProtectHostname = true;
-          ProtectKernelTunables = true;
-          ProtectKernelModules = true;
-          ProtectControlGroups = true;
-          RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
-          LockPersonality = true;
-          MemoryDenyWriteExecute = true;
-          RestrictRealtime = true;
-          RestrictSUIDSGID = true;
-          PrivateMounts = true;
-          # System Call Filtering
-          SystemCallArchitectures = "native";
+          # ReadWritePaths = [ cfg.dataDir "/run/user/1000" ];
+          # ReadOnlyPaths = [ "/" ];
+          # PermissionsStartOnly = true;
+          # # Capabilities
+          # CapabilityBoundingSet = "";
+          # # Security
+          # NoNewPrivileges = true;
+          # # Sandboxing
+          # ProtectSystem = "strict";
+          # ProtectHome = true;
+          # PrivateTmp = true;
+          # PrivateDevices = true;
+          # ProtectHostname = true;
+          # ProtectKernelTunables = true;
+          # ProtectKernelModules = true;
+          # ProtectControlGroups = true;
+          # RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+          # LockPersonality = true;
+          # MemoryDenyWriteExecute = true;
+          # RestrictRealtime = true;
+          # RestrictSUIDSGID = true;
+          # PrivateMounts = true;
+          # # System Call Filtering
+          # SystemCallArchitectures = "native";
           StateDirectory = "mysql";
           StateDirectoryMode = "0700";
         }
