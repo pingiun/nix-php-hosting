@@ -67,8 +67,6 @@ let
       # Ensure a consistent umask.
       umask 0022
 
-      ${builtins.readFile ./home-manager-lib.sh}
-
       ${textClosureMap id (withDrySnippets) (attrNames withDrySnippets)}
 
     ''
