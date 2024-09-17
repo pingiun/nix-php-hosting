@@ -40,6 +40,7 @@
               config = {
                 permittedInsecurePackages = [
                   "openssl-1.1.1w" # Required by MySQL 5.7, MariaDB 10.4
+                  "python-2.7.18.8" # Required by rabbitmq
                 ];
                 allowUnfreePredicate =
                   pkg:
@@ -185,7 +186,9 @@
           mariadb-user = pkgs.testers.runNixOSTest (import ./tests/mariadb-user.nix ./modules/default.nix);
           mysql-user = pkgs.testers.runNixOSTest (import ./tests/mysql-user.nix ./modules/default.nix);
           redis-user = pkgs.testers.runNixOSTest (import ./tests/redis-user.nix ./modules/default.nix);
-          systemd-user-unit = pkgs.testers.runNixOSTest (import ./tests/systemd-user-unit.nix ./modules/default.nix);
+          systemd-user-unit = pkgs.testers.runNixOSTest (
+            import ./tests/systemd-user-unit.nix ./modules/default.nix
+          );
         }
         // (mapAttrs' (
           name: value:
@@ -193,6 +196,24 @@
             (pkgs.extend (final: prev: { redis = value; })).testers.runNixOSTest ./tests/redis.nix
           )
         ) pkgs.phpHosting.redis)
+        // (mapAttrs' (
+          name: value:
+          nameValuePair "nixos-mysql-${replaceStrings [ "." ] [ "-" ] name}" (
+            (pkgs.extend (final: prev: { mysql = value; })).testers.runNixOSTest ./tests/mysql.nix
+          )
+        ) pkgs.phpHosting.mysql)
+        // (mapAttrs' (
+          name: value:
+          nameValuePair "nixos-mariadb-${replaceStrings [ "." ] [ "-" ] name}" (
+            (pkgs.extend (final: prev: { mariadb = value; })).testers.runNixOSTest ./tests/mariadb.nix
+          )
+        ) pkgs.phpHosting.mariadb)
+        // (mapAttrs' (
+          name: value:
+          nameValuePair "nixos-rabbitmq-${replaceStrings [ "." ] [ "-" ] name}" (
+            (pkgs.extend (final: prev: { rabbitmq-server = value; })).testers.runNixOSTest ./tests/rabbitmq.nix
+          )
+        ) pkgs.phpHosting.rabbitmq)
         // (mapAttrs' (
           name: value:
           nameValuePair "nixos-opensearch-${replaceStrings [ "." ] [ "-" ] name}" (
@@ -211,7 +232,12 @@
             { pkgs, ... }:
             {
               nixpkgs.overlays = [ self.overlays.default ];
-              services.getty.autologinUser = "test";
+              services.getty.autologinUser = "root";
+              users.allowNoPasswordLogin = true;
+              services.rabbitmq = {
+                enable = true;
+                package = pkgs.phpHosting.rabbitmq."3.13";
+              };
               projects.test = {
                 services.mysql = {
                   enable = true;

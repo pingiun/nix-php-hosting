@@ -79,9 +79,8 @@ in
             packages = [ (unitFiles projectCfg.systemd.units) ] ++ projectCfg.project.userPackages;
           };
         }) cfg.projects;
-        systemd.tmpfiles.rules = [
-          "d /project 0755 root root"
-        ];
+        users.mutableUsers = false;
+        systemd.tmpfiles.rules = [ "d /project 0755 root root" ];
       })
 
       (mkIf (cfg.projects != { }) {

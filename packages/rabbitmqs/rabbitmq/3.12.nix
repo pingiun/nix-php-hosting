@@ -3,17 +3,17 @@
   AppKit,
   Carbon,
   Cocoa,
-  erlang,
   elixir,
+  erlang,
 }:
 callPackage ./generic.nix {
-  version = "3.13.7";
-  hash = "sha256-GDUyYudwhQSLrFXO21W3fwmH2tl2STF9gSuZsb3GZh0=";
+  version = "3.12.13";
+  hash = "sha256-UjUkiS8ay66DDzeW9EXOJPQVHHxC1sXT8mCn+KVXSQ4=";
   inherit
     AppKit
     Carbon
     Cocoa
-    erlang
     elixir
+    erlang
     ;
 }
