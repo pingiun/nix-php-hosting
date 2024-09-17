@@ -334,7 +334,7 @@ in
 
     project.userPackages = [ cfg.package ];
 
-    # environment.etc."my.cnf".source = cfg.configFile;
+    project.file.".my.cnf".source = cfg.configFile;
 
     systemd.services.mysql = {
       description = "MySQL Server";

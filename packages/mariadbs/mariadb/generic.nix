@@ -194,7 +194,6 @@ let
               ncurses
             ]
           }
-          wrapProgram $out/bin/mysql --add-flags '--defaults-file=''${XDG_CONFIG_HOME:-$HOME/.config}/mysql/my.cnf'
         '';
 
         passthru.tests =

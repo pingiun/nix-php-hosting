@@ -38,6 +38,7 @@ in
           Type = "oneshot";
           RemainAfterExit = "yes";
           TimeoutStartSec = "5m";
+          # Execute with privileges to create the symlink
           ExecStartPre = "!${prestartScript}";
         };
       script = ''

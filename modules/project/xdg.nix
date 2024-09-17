@@ -109,8 +109,6 @@ in
         xdg.stateHome = mkDefault defaultStateHome;
 
         project.sessionVariables = variables;
-        # systemd.user.sessionVariables =
-        # mkIf pkgs.stdenv.hostPlatform.isLinux variables;
       }
     )
 

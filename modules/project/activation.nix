@@ -55,7 +55,6 @@ let
 
       oldGenPath="/run/user/$UID/current-project"
       projectConfig='@out@'
-      newGenPath="$projectConfig"
 
       export PATH=/empty
       for i in ${toString path}; do
