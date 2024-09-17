@@ -23,6 +23,7 @@ projectModule:
     in
     ''
       start_all()
+      machine.wait_for_unit("setup-project-test.service")
       machine.wait_for_unit("redis", "test")
 
       machine.wait_for_file("${redis.servers."".unixSocket}")
