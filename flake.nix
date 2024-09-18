@@ -124,7 +124,7 @@
             rabbitmq = {
               "3.11" = prev.rabbitmq_311;
               "3.12" = prev.rabbitmq_312;
-              # "3.13" = prev.rabbitmq_313;
+              "3.13" = prev.rabbitmq_313;
             };
           };
         })
@@ -169,7 +169,7 @@
             opensearch_212
             rabbitmq_311
             rabbitmq_312
-            # rabbitmq_313
+            rabbitmq_313
             ;
         }
         // nixpkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
@@ -234,6 +234,7 @@
               nixpkgs.overlays = [ self.overlays.default ];
               services.getty.autologinUser = "root";
               users.allowNoPasswordLogin = true;
+              systemd.services.rabbitmq.path = [ "/bin" ];
               services.rabbitmq = {
                 enable = true;
                 package = pkgs.phpHosting.rabbitmq."3.12";

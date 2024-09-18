@@ -10,6 +10,7 @@ in
   name = "rabbitmq";
 
   nodes.machine = {
+    systemd.services.rabbitmq.path = [ "/" ];
     services.rabbitmq = {
       enable = true;
       managementPlugin.enable = true;

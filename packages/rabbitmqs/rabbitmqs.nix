@@ -22,9 +22,9 @@ in
     inherit (prev.darwin) AppKit Carbon Cocoa;
     erlang = prev.erlang_25;
   };
-  # rabbitmq_313 = prev.callPackage ./rabbitmq/3.13.nix {
-  #   inherit (prev.darwin) AppKit Carbon Cocoa;
-  #   erlang = prev.erlang_26;
-  #   elixir = elixirs.elixir_1_17;
-  # };
+  rabbitmq_313 = prev.callPackage ./rabbitmq/3.13.nix {
+    inherit (prev.darwin) AppKit Carbon Cocoa;
+    erlang = prev.erlang_26;
+    elixir = elixirs.elixir_1_17;
+  };
 }
