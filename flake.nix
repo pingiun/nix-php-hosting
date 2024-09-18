@@ -185,6 +185,7 @@
           # xdg-write = pkgs.testers.runNixOSTest (import ./tests/xdg-write.nix ./modules/default.nix);
           mariadb-user = pkgs.testers.runNixOSTest (import ./tests/mariadb-user.nix ./modules/default.nix);
           mysql-user = pkgs.testers.runNixOSTest (import ./tests/mysql-user.nix ./modules/default.nix);
+          rabbitmq-user = pkgs.testers.runNixOSTest (import ./tests/rabbitmq-user.nix ./modules/default.nix);
           redis-user = pkgs.testers.runNixOSTest (import ./tests/redis-user.nix ./modules/default.nix);
           systemd-user-unit = pkgs.testers.runNixOSTest (
             import ./tests/systemd-user-unit.nix ./modules/default.nix
@@ -232,13 +233,9 @@
             { pkgs, ... }:
             {
               nixpkgs.overlays = [ self.overlays.default ];
-              services.getty.autologinUser = "root";
+              services.getty.autologinUser = "test";
               users.allowNoPasswordLogin = true;
-              systemd.services.rabbitmq.path = [ "/bin" ];
-              services.rabbitmq = {
-                enable = true;
-                package = pkgs.phpHosting.rabbitmq."3.12";
-              };
+
               projects.test = {
                 services.mysql = {
                   enable = true;
@@ -249,6 +246,12 @@
                   servers.default = {
                     enable = true;
                   };
+                };
+                services.rabbitmq = {
+                  enable = true;
+                  package = pkgs.phpHosting.rabbitmq."3.13";
+
+                  managementPlugin.enable = true;
                 };
               };
             }

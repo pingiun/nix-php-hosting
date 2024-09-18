@@ -199,16 +199,6 @@ in
                                     (STORED PLAIN TEXT, WORLD-READABLE IN NIX STORE)'';
                   };
 
-                  requirePass = mkOption {
-                    type = with types; nullOr str;
-                    default = null;
-                    description = ''
-                      Password for database (STORED PLAIN TEXT, WORLD-READABLE IN NIX STORE).
-                      Use requirePassFile to store it outside of the nix store in a dedicated file.
-                    '';
-                    example = "letmein!";
-                  };
-
                   requirePassFile = mkOption {
                     type = with types; nullOr path;
                     default = null;
@@ -297,7 +287,6 @@ in
                     slaveof = "${config.slaveOf.ip} ${toString config.slaveOf.port}";
                   })
                   (mkIf (config.masterAuth != null) { masterauth = config.masterAuth; })
-                  (mkIf (config.requirePass != null) { requirepass = config.requirePass; })
                 ];
               }
             )
@@ -312,20 +301,6 @@ in
   ###### implementation
 
   config = mkIf (enabledServers != { }) {
-
-    assertions = attrValues (
-      mapAttrs (name: conf: {
-        assertion = conf.requirePass != null -> conf.requirePassFile == null;
-        message = ''
-          You can only set one services.redis.servers.${name}.requirePass
-          or services.redis.servers.${name}.requirePassFile
-        '';
-      }) enabledServers
-    );
-
-    # boot.kernel.sysctl = mkIf cfg.vmOverCommit {
-    #   "vm.overcommit_memory" = "1";
-    # };
 
     project.userPackages = [ cfg.package ];
 

@@ -81,6 +81,9 @@ in
         }) cfg.projects;
         users.mutableUsers = false;
         systemd.tmpfiles.rules = [ "d /project 0755 root root" ];
+        boot.kernel.sysctl = {
+          "vm.overcommit_memory" = "1";
+        };
       })
 
       (mkIf (cfg.projects != { }) {
