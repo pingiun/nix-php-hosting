@@ -221,6 +221,12 @@
             (pkgs.extend (final: prev: { opensearch = value; })).testers.runNixOSTest ./tests/opensearch.nix
           )
         ) pkgs.phpHosting.opensearch)
+        // (mapAttrs' (
+          name: value:
+          nameValuePair "nixos-elasticsearch-${replaceStrings [ "." ] [ "-" ] name}" (
+            (pkgs.extend (final: prev: { elasticsearch = value; })).testers.runNixOSTest ./tests/elasticsearch.nix
+          )
+        ) pkgs.phpHosting.elasticsearch)
       );
 
       formatter = forEachDevSystem ({ pkgs, ... }: pkgs.nixfmt-rfc-style);
