@@ -224,7 +224,8 @@
         // (mapAttrs' (
           name: value:
           nameValuePair "nixos-elasticsearch-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (final: prev: { elasticsearch = value; })).testers.runNixOSTest ./tests/elasticsearch.nix
+            (pkgs.extend (final: prev: { elasticsearch = value; })).testers.runNixOSTest
+              ./tests/elasticsearch.nix
           )
         ) pkgs.phpHosting.elasticsearch)
       );
@@ -236,11 +237,39 @@
         modules = [
           self.nixosModules.default
           (
-            { pkgs, ... }:
+            { pkgs, lib, ... }:
             {
               nixpkgs.overlays = [ self.overlays.default ];
-              services.getty.autologinUser = "test";
+              services.getty.autologinUser = "root";
               users.allowNoPasswordLogin = true;
+
+              imports = [ ./tests/elasticsearch-patched-module.nix ];
+              disabledModules = [ "services/search/elasticsearch.nix" ];
+
+              virtualisation.vmVariant = {
+                # following configuration is added only when building VM with build-vm
+                virtualisation = {
+                  memorySize = 4096; # Use 2048MiB memory.
+                  cores = 4;
+                  graphics = false;
+                };
+              };
+
+              nixpkgs.config.allowUnfreePredicate =
+                pkg:
+                builtins.elem (lib.getName pkg) [
+                  "elasticsearch"
+                ];
+
+              services.elasticsearch = {
+                enable = true;
+                package = pkgs.phpHosting.elasticsearch."8.5";
+                extraConf = ''
+                  xpack.security.transport.ssl.enabled: false
+                  xpack.security.http.ssl.enabled: false
+                '';
+              };
+              systemd.services.elasticsearch.environment.ES_JAVA_HOME = pkgs.jdk17_headless;
 
               projects.test = {
                 services.mysql = {

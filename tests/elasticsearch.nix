@@ -1,14 +1,24 @@
 { pkgs, lib, ... }:
 {
-  name = "opensearch";
-  meta.maintainers = with pkgs.lib.maintainers; [ shyim ];
+  name = "elasticsearch";
 
   nodes.machine =
     { config, ... }:
     with lib;
     {
-      virtualisation.memorySize = 2048;
-      services.elasticsearch.enable = true;
+      imports = [ ./elasticsearch-patched-module.nix ];
+      disabledModules = [ "services/search/elasticsearch.nix" ];
+
+      virtualisation.memorySize = 4096;
+      services.elasticsearch = {
+        enable = true;
+        extraConf = ''
+          xpack.security.enabled: false
+          xpack.security.transport.ssl.enabled: false
+          xpack.security.http.ssl.enabled: false
+        '';
+      };
+      systemd.services.elasticsearch.environment.ES_JAVA_HOME = pkgs.jdk17_headless;
     };
 
   testScript = ''
@@ -17,7 +27,7 @@
     machine.wait_for_open_port(9200)
 
     machine.succeed(
-        "curl --fail localhost:9200"
+        "curl --fail http://localhost:9200"
     )
   '';
 }
