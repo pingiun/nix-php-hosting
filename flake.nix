@@ -74,7 +74,6 @@
         (final: prev: {
           phpHosting = {
             php = {
-              "5.6" = prev.php56;
               "7.0" = prev.php70;
               "7.1" = prev.php71;
               "7.2" = prev.php72;
@@ -83,8 +82,8 @@
               "8.0" = prev.php80;
               "8.1" = prev.php81;
               "8.2" = prev.php82;
+              "8.3" = prev.php83;
             };
-            "8.3" = prev.php83;
             mariadb = {
               "10.4" = prev.mariadb_104;
               "10.6" = prev.mariadb_106;
