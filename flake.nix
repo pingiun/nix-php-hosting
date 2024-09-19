@@ -228,6 +228,12 @@
               ./tests/elasticsearch.nix
           )
         ) pkgs.phpHosting.elasticsearch)
+        // (mapAttrs' (
+          name: value:
+          nameValuePair "nixos-phpfpm-${replaceStrings [ "." ] [ "-" ] name}" (
+            pkgs.testers.runNixOSTest (import ./tests/fpm.nix value)
+          )
+        ) pkgs.phpHosting.php)
       );
 
       formatter = forEachDevSystem ({ pkgs, ... }: pkgs.nixfmt-rfc-style);
