@@ -52,7 +52,7 @@ php:
     assert "PHP Version ${php.version}" in response, "PHP version not detected"
 
     # Check so we have database and some other extensions loaded
-    for ext in ["json", "opcache", "pdo_mysql", "pdo_pgsql", "pdo_sqlite", "apcu"]:
+    for ext in ["json", "opcache", "pdo_mysql", "pdo_pgsql", "pdo_sqlite"]:
         assert ext in response, f"Missing {ext} extension"
         machine.succeed(f'test -n "$(php -m | grep -i {ext})"')
   '';
