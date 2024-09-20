@@ -4,6 +4,7 @@ let
     ./activation.nix
     ./files.nix
     ./project-environment.nix
+    ./services/elasticsearch.nix
     ./services/mariadb.nix
     ./services/rabbitmq.nix
     ./services/redis.nix

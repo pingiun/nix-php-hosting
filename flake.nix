@@ -181,7 +181,10 @@
         with pkgs.lib;
         {
           activation = pkgs.testers.runNixOSTest (import ./tests/activation-script.nix ./modules/default.nix);
-          # xdg-write = pkgs.testers.runNixOSTest (import ./tests/xdg-write.nix ./modules/default.nix);
+          xdg-write = pkgs.testers.runNixOSTest (import ./tests/xdg-write.nix ./modules/default.nix);
+          elasticsearch-user = pkgs.testers.runNixOSTest (
+            import ./tests/elasticsearch-user.nix ./modules/default.nix
+          );
           mariadb-user = pkgs.testers.runNixOSTest (import ./tests/mariadb-user.nix ./modules/default.nix);
           mysql-user = pkgs.testers.runNixOSTest (import ./tests/mysql-user.nix ./modules/default.nix);
           rabbitmq-user = pkgs.testers.runNixOSTest (import ./tests/rabbitmq-user.nix ./modules/default.nix);
@@ -245,7 +248,7 @@
             { pkgs, lib, ... }:
             {
               nixpkgs.overlays = [ self.overlays.default ];
-              services.getty.autologinUser = "root";
+              services.getty.autologinUser = "test";
               users.allowNoPasswordLogin = true;
 
               imports = [ ./tests/elasticsearch-patched-module.nix ];
@@ -259,22 +262,6 @@
                   graphics = false;
                 };
               };
-
-              nixpkgs.config.allowUnfreePredicate =
-                pkg:
-                builtins.elem (lib.getName pkg) [
-                  "elasticsearch"
-                ];
-
-              services.elasticsearch = {
-                enable = true;
-                package = pkgs.phpHosting.elasticsearch."8.5";
-                extraConf = ''
-                  xpack.security.transport.ssl.enabled: false
-                  xpack.security.http.ssl.enabled: false
-                '';
-              };
-              systemd.services.elasticsearch.environment.ES_JAVA_HOME = pkgs.jdk17_headless;
 
               projects.test = {
                 services.mysql = {
@@ -292,6 +279,10 @@
                   package = pkgs.phpHosting.rabbitmq."3.13";
 
                   managementPlugin.enable = true;
+                };
+                services.elasticsearch = {
+                  enable = true;
+                  package = pkgs.phpHosting.elasticsearch."8.11";
                 };
               };
             }
