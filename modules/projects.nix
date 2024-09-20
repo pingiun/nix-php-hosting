@@ -84,11 +84,6 @@ in
         boot.kernel.sysctl = {
           "vm.overcommit_memory" = "1";
         };
-        nixpkgs.config.allowUnfreePredicate =
-          pkg:
-          builtins.elem (lib.getName pkg) [
-            "elasticsearch"
-          ];
       })
 
       (mkIf (cfg.projects != { }) {
