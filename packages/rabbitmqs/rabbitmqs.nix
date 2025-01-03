@@ -21,6 +21,7 @@ in
   rabbitmq_312 = prev.callPackage ./rabbitmq/3.12.nix {
     inherit (prev.darwin) AppKit Carbon Cocoa;
     erlang = prev.erlang_25;
+    elixir = prev.elixir_1_15;
   };
   rabbitmq_313 = prev.callPackage ./rabbitmq/3.13.nix {
     inherit (prev.darwin) AppKit Carbon Cocoa;
