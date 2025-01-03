@@ -6,7 +6,7 @@
   inputs = {
     flake-schemas.url = "https://flakehub.com/f/DeterminateSystems/flake-schemas/*.tar.gz";
 
-    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.2405.*.tar.gz";
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.2411.*.tar.gz";
   };
 
   # Flake outputs that other flakes can use
@@ -83,6 +83,7 @@
               "8.1" = prev.php81;
               "8.2" = prev.php82;
               "8.3" = prev.php83;
+              "8.4" = prev.php84;
             };
             mariadb = {
               "10.4" = prev.mariadb_104;

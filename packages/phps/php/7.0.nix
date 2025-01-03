@@ -9,8 +9,7 @@ in
 base.withExtensions (
   { all, ... }:
 
-  with all;
-  (
+  with all; (
     [
       bcmath
       calendar
@@ -54,6 +53,8 @@ base.withExtensions (
       zip
       zlib
     ]
-    ++ prev.lib.optionals (!prev.stdenv.isDarwin) [ imap ]
+    ++ prev.lib.optionals (!prev.stdenv.isDarwin) [
+      imap
+    ]
   )
 )
