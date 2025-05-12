@@ -88,6 +88,7 @@
             mariadb = {
               "10.4" = prev.mariadb_104;
               "10.6" = prev.mariadb_106;
+              "11.4" = prev.mariadb_114;
             };
             mysql = {
               "5.7" = prev.mysql57;
@@ -143,8 +144,10 @@
             php81
             php82
             php83
+            php84
             mariadb_104
             mariadb_106
+            mariadb_114
             mysql57
             mysql80
             redis_60
