@@ -71,6 +71,7 @@
         (import ./packages/elasticsearches/elasticsearches.nix nixpkgs)
         (import ./packages/opensearches/opensearches.nix nixpkgs)
         (import ./packages/rabbitmqs/rabbitmqs.nix nixpkgs)
+        (import ./packages/valkeys/valkeys.nix nixpkgs)
         (final: prev: {
           phpHosting = {
             php = {
@@ -93,12 +94,16 @@
             mysql = {
               "5.7" = prev.mysql57;
               "8.0" = prev.mysql80;
+              "8.4" = prev.mysql84;
             };
             redis = {
               "6.0" = prev.redis_60;
               "6.2" = prev.redis_62;
               "7.0" = prev.redis_70;
               "7.2" = prev.redis_72;
+            };
+            valkey = {
+              "8.0" = prev.valkey;
             };
             varnish = {
               "6.4" = prev.varnish64;
@@ -107,6 +112,7 @@
               "7.1" = prev.varnish71;
               "7.3" = prev.varnish73;
               "7.5" = prev.varnish75;
+              "7.6" = prev.varnish76;
             };
             elasticsearch = {
               "7.9" = prev.elasticsearch_79;
@@ -121,11 +127,13 @@
               "1.3" = prev.opensearch_13;
               "2.5" = prev.opensearch_25;
               "2.12" = prev.opensearch_212;
+              "2.19" = prev.opensearch_219;
             };
             rabbitmq = {
               "3.11" = prev.rabbitmq_311;
               "3.12" = prev.rabbitmq_312;
               "3.13" = prev.rabbitmq_313;
+              "4.1" = prev.rabbitmq_41;
             };
           };
         })
@@ -154,12 +162,14 @@
             redis_62
             redis_70
             redis_72
+            valkey_8_0
             varnish64
             varnish65
             varnish70
             varnish71
             varnish73
             varnish75
+            varnish76
             elasticsearch_79
             elasticsearch_716
             elasticsearch_717
@@ -170,9 +180,11 @@
             opensearch_13
             opensearch_25
             opensearch_212
+            opensearch_219
             rabbitmq_311
             rabbitmq_312
             rabbitmq_313
+            rabbitmq_41
             ;
         }
         // nixpkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {

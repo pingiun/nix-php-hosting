@@ -7,4 +7,5 @@ nixpkgs: final: prev:
   varnish71 = prev.callPackage ./varnish/7.1.nix { };
   varnish73 = prev.callPackage ./varnish/7.3.nix { };
   varnish75 = prev.callPackage ./varnish/7.5.nix { };
+  varnish76 = prev.callPackage ./varnish/7.6.nix { };
 }
