@@ -4,6 +4,7 @@
   Carbon,
   Cocoa,
   elixir,
+  erlang,
 }:
 callPackage ./generic.nix {
   version = "3.11.28";
@@ -13,5 +14,6 @@ callPackage ./generic.nix {
     Carbon
     Cocoa
     elixir
+    erlang
     ;
 }
