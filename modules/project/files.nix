@@ -19,14 +19,14 @@ let
     pname = "make-project-files";
     version = "0.1.0";
     src = ../../helpers/make-project-files;
-    cargoSha256 = "sha256-mGUl18r5kBzxNgwpzGc7ndc72liLyMAufK8vCiir4Bw=";
+    cargoHash = "sha256-mGUl18r5kBzxNgwpzGc7ndc72liLyMAufK8vCiir4Bw=";
   };
 
   replace-project-files = pkgs.rustPlatform.buildRustPackage {
     pname = "replace-project-files";
     version = "0.1.0";
     src = ../../helpers/replace-project-files;
-    cargoSha256 = "sha256-BHA0Y3tS1Ep7qqFI/eoiLfeMW6aILQJsbgNam/JT644=";
+    cargoHash = "sha256-BHA0Y3tS1Ep7qqFI/eoiLfeMW6aILQJsbgNam/JT644=";
   };
 
 in
