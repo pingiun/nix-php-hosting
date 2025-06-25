@@ -2,6 +2,7 @@
   pkgs,
   erlang,
   erlang_26,
+  erlang_27,
   lib,
   callPackage,
   ...
@@ -23,7 +24,7 @@ in
     debugInfo = true;
   };
   elixir_1_17 = callElixir ./1.17.nix {
-    inherit erlang;
+    erlang = erlang_27;
     debugInfo = true;
   };
 }

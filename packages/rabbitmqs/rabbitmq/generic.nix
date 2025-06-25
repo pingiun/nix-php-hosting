@@ -99,6 +99,7 @@ stdenv.mkDerivation {
 
   preBuild = ''
     export LANG=C.UTF-8 # fix elixir locale warning
+    addToSearchPath ERL_LIBS "${elixir}/lib/elixir/lib"
   '';
 
   postInstall = ''
