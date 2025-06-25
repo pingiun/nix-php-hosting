@@ -26,6 +26,8 @@
   nixosTests,
   version,
   hash,
+  which,
+  p7zip,
 }:
 
 let
@@ -60,6 +62,9 @@ stdenv.mkDerivation {
     zip
     rsync
     python3
+  ] ++ lib.optional (lib.versionAtLeast version "4.1") [
+    which
+    p7zip
   ];
 
   buildInputs =
@@ -94,11 +99,12 @@ stdenv.mkDerivation {
 
   preBuild = ''
     export LANG=C.UTF-8 # fix elixir locale warning
+    addToSearchPath ERL_LIBS "${elixir}/lib/elixir/lib"
   '';
 
   postInstall = ''
     # rabbitmq-env calls to sed/coreutils, so provide everything early
-    sed -i $out/sbin/rabbitmq-env -e '2s|^|PATH=${runtimePath}\''${PATH:+:}\$PATH/\n|'
+    sed -i $out/sbin/rabbitmq-env -e '2s|^|PATH=${runtimePath}\''${PATH:+:}\$PATH/\nERL_LIBS="${elixir}/lib/elixir/lib"\n|'
 
     # We know exactly where rabbitmq is gonna be, so we patch that into the env-script.
     # By doing it early we make sure that auto-detection for this will
