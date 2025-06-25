@@ -217,6 +217,12 @@
         ) pkgs.phpHosting.redis)
         // (mapAttrs' (
           name: value:
+          nameValuePair "nixos-valkey-${replaceStrings [ "." ] [ "-" ] name}" (
+            (pkgs.extend (final: prev: { redis = value; })).testers.runNixOSTest ./tests/redis.nix
+          )
+        ) pkgs.phpHosting.valkey)
+        // (mapAttrs' (
+          name: value:
           nameValuePair "nixos-mysql-${replaceStrings [ "." ] [ "-" ] name}" (
             (pkgs.extend (final: prev: { mysql = value; })).testers.runNixOSTest ./tests/mysql.nix
           )
