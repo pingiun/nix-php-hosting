@@ -26,6 +26,8 @@
   nixosTests,
   version,
   hash,
+  which,
+  p7zip,
 }:
 
 let
@@ -60,6 +62,9 @@ stdenv.mkDerivation {
     zip
     rsync
     python3
+  ] ++ lib.optional (lib.versionAtLeast version "4.1") [
+    which
+    p7zip
   ];
 
   buildInputs =
