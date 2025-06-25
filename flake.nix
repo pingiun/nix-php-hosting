@@ -114,6 +114,9 @@
               "7.5" = prev.varnish75;
               "7.6" = prev.varnish76;
             };
+            varnishModules = {
+              "7.6" = prev.varnish76Modules;
+            };
             elasticsearch = {
               "7.9" = prev.elasticsearch_79;
               "7.16" = prev.elasticsearch_716;
@@ -170,6 +173,7 @@
             varnish73
             varnish75
             varnish76
+            varnish76Modules
             elasticsearch_79
             elasticsearch_716
             elasticsearch_717
