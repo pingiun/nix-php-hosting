@@ -131,6 +131,7 @@
               "2.5" = prev.opensearch_25;
               "2.12" = prev.opensearch_212;
               "2.19" = prev.opensearch_219;
+              "3.0" = prev.opensearch_30;
             };
             rabbitmq = {
               "3.11" = prev.rabbitmq_311;
@@ -185,6 +186,7 @@
             opensearch_25
             opensearch_212
             opensearch_219
+            opensearch_30
             rabbitmq_311
             rabbitmq_312
             rabbitmq_313

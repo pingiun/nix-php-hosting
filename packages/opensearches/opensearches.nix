@@ -4,4 +4,5 @@ nixpkgs: final: prev: {
   opensearch_25 = prev.callPackage ./opensearch/2.5.nix { jre_headless = prev.jdk17_headless; };
   opensearch_212 = prev.callPackage ./opensearch/2.12.nix { };
   opensearch_219 = prev.callPackage ./opensearch/2.19.nix { };
+  opensearch_30 = prev.callPackage ./opensearch/3.0.0.nix { };
 }
