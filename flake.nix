@@ -36,6 +36,7 @@
         nixpkgs.lib.genAttrs systems (
           system:
           f {
+            inherit system;
             pkgs = import nixpkgs {
               inherit system;
               config = {
@@ -200,71 +201,74 @@
       );
 
       checks = forEachSupportedSystem (
-        { pkgs, ... }:
-        with pkgs.lib;
-        {
-          activation = pkgs.testers.runNixOSTest (import ./tests/activation-script.nix ./modules/default.nix);
-          xdg-write = pkgs.testers.runNixOSTest (import ./tests/xdg-write.nix ./modules/default.nix);
-          elasticsearch-user = pkgs.testers.runNixOSTest (
-            import ./tests/elasticsearch-user.nix ./modules/default.nix
-          );
-          mariadb-user = pkgs.testers.runNixOSTest (import ./tests/mariadb-user.nix ./modules/default.nix);
-          mysql-user = pkgs.testers.runNixOSTest (import ./tests/mysql-user.nix ./modules/default.nix);
-          rabbitmq-user = pkgs.testers.runNixOSTest (import ./tests/rabbitmq-user.nix ./modules/default.nix);
-          redis-user = pkgs.testers.runNixOSTest (import ./tests/redis-user.nix ./modules/default.nix);
-          systemd-user-unit = pkgs.testers.runNixOSTest (
-            import ./tests/systemd-user-unit.nix ./modules/default.nix
-          );
-        }
-        // (mapAttrs' (
-          name: value:
-          nameValuePair "nixos-redis-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (final: prev: { redis = value; })).testers.runNixOSTest ./tests/redis.nix
-          )
-        ) pkgs.phpHosting.redis)
-        // (mapAttrs' (
-          name: value:
-          nameValuePair "nixos-valkey-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (final: prev: { redis = value; })).testers.runNixOSTest ./tests/redis.nix
-          )
-        ) pkgs.phpHosting.valkey)
-        // (mapAttrs' (
-          name: value:
-          nameValuePair "nixos-mysql-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (final: prev: { mysql = value; })).testers.runNixOSTest ./tests/mysql.nix
-          )
-        ) pkgs.phpHosting.mysql)
-        // (mapAttrs' (
-          name: value:
-          nameValuePair "nixos-mariadb-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (final: prev: { mariadb = value; })).testers.runNixOSTest ./tests/mariadb.nix
-          )
-        ) pkgs.phpHosting.mariadb)
-        // (mapAttrs' (
-          name: value:
-          nameValuePair "nixos-rabbitmq-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (final: prev: { rabbitmq-server = value; })).testers.runNixOSTest ./tests/rabbitmq.nix
-          )
-        ) pkgs.phpHosting.rabbitmq)
-        // (mapAttrs' (
-          name: value:
-          nameValuePair "nixos-opensearch-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (final: prev: { opensearch = value; })).testers.runNixOSTest ./tests/opensearch.nix
-          )
-        ) pkgs.phpHosting.opensearch)
-        // (mapAttrs' (
-          name: value:
-          nameValuePair "nixos-elasticsearch-${replaceStrings [ "." ] [ "-" ] name}" (
-            (pkgs.extend (final: prev: { elasticsearch = value; })).testers.runNixOSTest
-              ./tests/elasticsearch.nix
-          )
-        ) pkgs.phpHosting.elasticsearch)
-        // (mapAttrs' (
-          name: value:
-          nameValuePair "nixos-phpfpm-${replaceStrings [ "." ] [ "-" ] name}" (
-            pkgs.testers.runNixOSTest (import ./tests/fpm.nix value)
-          )
-        ) pkgs.phpHosting.php)
+        { pkgs, system, ... }:
+        if system == "aarch64-darwin" then
+          { }
+        else
+          with pkgs.lib;
+          {
+            activation = pkgs.testers.runNixOSTest (import ./tests/activation-script.nix ./modules/default.nix);
+            xdg-write = pkgs.testers.runNixOSTest (import ./tests/xdg-write.nix ./modules/default.nix);
+            elasticsearch-user = pkgs.testers.runNixOSTest (
+              import ./tests/elasticsearch-user.nix ./modules/default.nix
+            );
+            mariadb-user = pkgs.testers.runNixOSTest (import ./tests/mariadb-user.nix ./modules/default.nix);
+            mysql-user = pkgs.testers.runNixOSTest (import ./tests/mysql-user.nix ./modules/default.nix);
+            rabbitmq-user = pkgs.testers.runNixOSTest (import ./tests/rabbitmq-user.nix ./modules/default.nix);
+            redis-user = pkgs.testers.runNixOSTest (import ./tests/redis-user.nix ./modules/default.nix);
+            systemd-user-unit = pkgs.testers.runNixOSTest (
+              import ./tests/systemd-user-unit.nix ./modules/default.nix
+            );
+          }
+          // (mapAttrs' (
+            name: value:
+            nameValuePair "nixos-redis-${replaceStrings [ "." ] [ "-" ] name}" (
+              (pkgs.extend (final: prev: { redis = value; })).testers.runNixOSTest ./tests/redis.nix
+            )
+          ) pkgs.phpHosting.redis)
+          // (mapAttrs' (
+            name: value:
+            nameValuePair "nixos-valkey-${replaceStrings [ "." ] [ "-" ] name}" (
+              (pkgs.extend (final: prev: { redis = value; })).testers.runNixOSTest ./tests/redis.nix
+            )
+          ) pkgs.phpHosting.valkey)
+          // (mapAttrs' (
+            name: value:
+            nameValuePair "nixos-mysql-${replaceStrings [ "." ] [ "-" ] name}" (
+              (pkgs.extend (final: prev: { mysql = value; })).testers.runNixOSTest ./tests/mysql.nix
+            )
+          ) pkgs.phpHosting.mysql)
+          // (mapAttrs' (
+            name: value:
+            nameValuePair "nixos-mariadb-${replaceStrings [ "." ] [ "-" ] name}" (
+              (pkgs.extend (final: prev: { mariadb = value; })).testers.runNixOSTest ./tests/mariadb.nix
+            )
+          ) pkgs.phpHosting.mariadb)
+          // (mapAttrs' (
+            name: value:
+            nameValuePair "nixos-rabbitmq-${replaceStrings [ "." ] [ "-" ] name}" (
+              (pkgs.extend (final: prev: { rabbitmq-server = value; })).testers.runNixOSTest ./tests/rabbitmq.nix
+            )
+          ) pkgs.phpHosting.rabbitmq)
+          // (mapAttrs' (
+            name: value:
+            nameValuePair "nixos-opensearch-${replaceStrings [ "." ] [ "-" ] name}" (
+              (pkgs.extend (final: prev: { opensearch = value; })).testers.runNixOSTest ./tests/opensearch.nix
+            )
+          ) pkgs.phpHosting.opensearch)
+          // (mapAttrs' (
+            name: value:
+            nameValuePair "nixos-elasticsearch-${replaceStrings [ "." ] [ "-" ] name}" (
+              (pkgs.extend (final: prev: { elasticsearch = value; })).testers.runNixOSTest
+                ./tests/elasticsearch.nix
+            )
+          ) pkgs.phpHosting.elasticsearch)
+          // (mapAttrs' (
+            name: value:
+            nameValuePair "nixos-phpfpm-${replaceStrings [ "." ] [ "-" ] name}" (
+              pkgs.testers.runNixOSTest (import ./tests/fpm.nix value)
+            )
+          ) pkgs.phpHosting.php)
       );
 
       formatter = forEachDevSystem ({ pkgs, ... }: pkgs.nixfmt-rfc-style);

@@ -20,9 +20,6 @@
   gnused,
   systemd,
   glibcLocales,
-  AppKit,
-  Carbon,
-  Cocoa,
   nixosTests,
   version,
   hash,
@@ -74,11 +71,6 @@ stdenv.mkDerivation {
       libxml2
       libxslt
       glibcLocales
-    ]
-    ++ lib.optionals stdenv.isDarwin [
-      AppKit
-      Carbon
-      Cocoa
     ];
 
   outputs = [
