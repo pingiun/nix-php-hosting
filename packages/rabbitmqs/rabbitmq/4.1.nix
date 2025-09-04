@@ -4,8 +4,8 @@
   elixir,
 }:
 callPackage ./generic.nix {
-  version = "4.1.1";
-  hash = "sha256-eIoa8ZwnVNhV+6yQOT5LqfhgvT1TfYaPIgSyVkV5HFI=";
+  version = "4.1.4";
+  hash = "sha256-dqNdrbXSysYUMN+6gMMb9GXKER/mOGXgW6j3iOLHNks=";
   inherit
     erlang
     elixir

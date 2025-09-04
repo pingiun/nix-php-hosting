@@ -79,6 +79,12 @@ stdenv.mkDerivation {
     "doc"
   ];
 
+  HOME = "/homeless";
+
+  buildFlags = [
+    "ELIXIR_LIBS=${elixir}/lib/elixir/lib"
+  ];
+
   installFlags = [
     "PREFIX=${placeholder "out"}"
     "RMQ_ERLAPP_DIR=${placeholder "out"}"
