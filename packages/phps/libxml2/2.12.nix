@@ -35,7 +35,9 @@ stdenv.mkDerivation (finalAttrs: {
 
   propagatedBuildInputs = [
     findXMLCatalogs
-  ] ++ lib.optionals stdenv.isDarwin [ libiconv ] ++ lib.optionals icuSupport [ icu ];
+  ]
+  ++ lib.optionals stdenv.isDarwin [ libiconv ]
+  ++ lib.optionals icuSupport [ icu ];
 
   configureFlags = [
     "--exec-prefix=${placeholder "dev"}"

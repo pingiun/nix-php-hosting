@@ -6,19 +6,22 @@ pkgs:
 final: prev:
 
 let
+  libxml2_12 = pkgs.callPackage ./libxml2/2.12.nix { };
+
   patchName = patch: patch.name or (builtins.baseNameOf patch);
 
+  linkExtension = dep: "mkdir -p ext; ln -s ${dep.dev}/include ext/${dep.extensionName}";
+
   linkInternalDeps = extensions: ''
-    ${lib.concatMapStringsSep "\n" (
-      dep: "mkdir -p ext; ln -s ${dep.dev}/include ext/${dep.extensionName}"
-    ) extensions}
+    ${lib.concatMapStringsSep "\n" linkExtension extensions}
   '';
 
   inherit (pkgs) lib;
 
-  inherit (import ./lib.nix { inherit lib; }) removeLines;
-in
+  inherit (pkgs.stdenv.cc) isClang;
 
+  inherit (import ./lib.nix { inherit lib; }) mergeEnv removeLines;
+in
 {
   buildPecl =
     {
@@ -87,7 +90,9 @@ in
     couchbase = prev.extensions.couchbase.overrideAttrs (attrs: {
       preConfigure =
         let
-          deps = lib.optionals (lib.versionOlder prev.php.version "8.0") [ final.extensions.json ];
+          deps = lib.optionals (lib.versionOlder prev.php.version "8.0") [
+            final.extensions.json
+          ];
         in
         attrs.preConfigure or "" + linkInternalDeps deps;
     });
@@ -100,103 +105,143 @@ in
       else
         prev.extensions.datadog_trace;
 
-    dom = prev.extensions.dom.overrideAttrs (
-      attrs:
-      {
-        patches =
-          let
-            upstreamPatches = attrs.patches or [ ];
+    decimal =
+      if lib.versionOlder prev.php.version "7.0" then
+        throw "php.extensions.decimal requires PHP version >= 7.0"
+      else if lib.versionOlder prev.php.version "8.0" then
+        prev.extensions.decimal.overrideAttrs (attrs: {
+          preConfigure = attrs.preConfigure or "" + linkInternalDeps [ final.extensions.json ];
 
-            ourPatches =
-              lib.optionals (lib.versionOlder prev.php.version "7.2") [
-                # Fix tests with libxml2 2.9.10.
-                (pkgs.fetchpatch {
-                  url = "https://github.com/php/php-src/commit/e29922f054639a934f3077190729007896ae244c.patch";
-                  sha256 = "zC2QE6snAhhA7ItXgrc80WlDVczTlZEzgZsD7AS+gtw=";
-                })
-              ]
-              ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
-                (pkgs.fetchpatch {
-                  url = "https://github.com/php/php-src/commit/4cc261aa6afca2190b1b74de39c3caa462ec6f0b.patch";
-                  sha256 = "11qsdiwj1zmpfc2pgh6nr0sn7qa1nyjg4jwf69cgwnd57qfjcy4k";
-                  excludes = [
-                    "ext/dom/tests/bug43364.phpt"
-                    "ext/dom/tests/bug80268.phpt"
-                  ];
-                })
-              ]
-              ++
-                lib.optionals (lib.versionAtLeast prev.php.version "7.1" && lib.versionOlder prev.php.version "7.3")
-                  [
-                    # Patch rebased from https://github.com/php/php-src/commit/061058a9b1bbd90d27d97d79aebcf2b5029767b0
-                    # Fix PHP tests with libxml2 2.12
-                    ./patches/php71-libxml212-tests.patch
-                  ]
-              ++
-                lib.optionals (lib.versionAtLeast prev.php.version "7.3" && lib.versionOlder prev.php.version "7.4")
-                  [
-                    # Patch rebased from https://github.com/php/php-src/commit/061058a9b1bbd90d27d97d79aebcf2b5029767b0
-                    # Fix PHP tests with libxml2 2.12
-                    ./patches/php73-libxml212-tests.patch
-                  ]
-              ++
-                lib.optionals (lib.versionAtLeast prev.php.version "7.4" && lib.versionOlder prev.php.version "8.1")
-                  [
-                    # Patch rebased from https://github.com/php/php-src/commit/061058a9b1bbd90d27d97d79aebcf2b5029767b0
-                    # Fix PHP tests with libxml2 2.12
-                    ./patches/php74-libxml212-tests.patch
-                  ]
-              ++
-                lib.optionals
-                  (lib.versionAtLeast prev.php.version "8.1" && lib.versionOlder prev.php.version "8.2.14")
-                  [
-                    # Patch rebased from https://github.com/php/php-src/commit/0a39890c967aa57225bb6bdf4821aff7a3a3c082
-                    # Fix compilation errors with libxml2 2.12
-                    ./patches/libxml-ext.patch
-                  ];
-          in
-          ourPatches ++ upstreamPatches;
+          env = mergeEnv attrs {
+            NIX_CFLAGS_COMPILE = lib.optionals (lib.versionOlder prev.php.version "7.4") [
+              "-Wno-incompatible-${lib.optionalString isClang "function-"}pointer-types"
+            ];
+          };
+        })
+      else
+        prev.extensions.decimal;
 
-        configureFlags =
-          attrs.configureFlags or [ ]
-          ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
-            # Required to build on darwin.
-            "--with-libxml-dir=${pkgs.libxml2.dev}"
-          ];
+    dom = prev.extensions.dom.overrideAttrs (attrs: {
+      patches =
+        let
+          upstreamPatches = builtins.filter (
+            patch:
+            # The patch does not apply on PHP < 8.2
+            patchName patch == "d6e70e705323a50b616ffee9402245ab97de3e4e.patch"
+            -> lib.versionAtLeast prev.php.version "8.2"
+          ) (attrs.patches or [ ]);
 
-        # Tests fail on Darwin for some reason.
-        doCheck = lib.versionOlder prev.php.version "7.4" -> pkgs.stdenv.isLinux;
+          ourPatches =
+            lib.optionals (lib.versionOlder prev.php.version "7.2") [
+              # Fix tests with libxml2 2.9.10.
+              (pkgs.fetchpatch {
+                url = "https://github.com/php/php-src/commit/e29922f054639a934f3077190729007896ae244c.patch";
+                sha256 = "zC2QE6snAhhA7ItXgrc80WlDVczTlZEzgZsD7AS+gtw=";
+              })
+            ]
+            ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
+              (pkgs.fetchpatch {
+                url = "https://github.com/php/php-src/commit/4cc261aa6afca2190b1b74de39c3caa462ec6f0b.patch";
+                sha256 = "11qsdiwj1zmpfc2pgh6nr0sn7qa1nyjg4jwf69cgwnd57qfjcy4k";
+                excludes = [
+                  "ext/dom/tests/bug43364.phpt"
+                  "ext/dom/tests/bug80268.phpt"
+                ];
+              })
+            ]
+            ++
+              lib.optionals (lib.versionAtLeast prev.php.version "7.1" && lib.versionOlder prev.php.version "7.3")
+                [
+                  # Patch rebased from https://github.com/php/php-src/commit/061058a9b1bbd90d27d97d79aebcf2b5029767b0
+                  # Fix PHP tests with libxml2 2.12
+                  ./patches/php71-libxml212-tests.patch
+                ]
+            ++
+              lib.optionals (lib.versionAtLeast prev.php.version "7.3" && lib.versionOlder prev.php.version "7.4")
+                [
+                  # Patch rebased from https://github.com/php/php-src/commit/061058a9b1bbd90d27d97d79aebcf2b5029767b0
+                  # Fix PHP tests with libxml2 2.12
+                  ./patches/php73-libxml212-tests.patch
+                ]
+            ++
+              lib.optionals (lib.versionAtLeast prev.php.version "7.4" && lib.versionOlder prev.php.version "8.1")
+                [
+                  # Patch rebased from https://github.com/php/php-src/commit/061058a9b1bbd90d27d97d79aebcf2b5029767b0
+                  # Fix PHP tests with libxml2 2.12
+                  ./patches/php74-libxml212-tests.patch
+                ]
+            ++
+              lib.optionals
+                (lib.versionAtLeast prev.php.version "8.2" && lib.versionOlder prev.php.version "8.2.14")
+                [
+                  # Patch rebased from https://github.com/php/php-src/commit/0a39890c967aa57225bb6bdf4821aff7a3a3c082
+                  # Fix compilation errors with libxml2 2.12
+                  ./patches/libxml-ext.patch
+                ]
+            ++
+              lib.optionals
+                (lib.versionAtLeast prev.php.version "8.1" && lib.versionOlder prev.php.version "8.1.31")
+                [
+                  # Patch rebased from https://github.com/php/php-src/commit/0a39890c967aa57225bb6bdf4821aff7a3a3c082
+                  # Fix compilation errors with libxml2 2.12
+                  ./patches/libxml-ext.patch
+                ]
+            ++
+              lib.optionals (lib.versionAtLeast prev.php.version "8.1" && lib.versionOlder prev.php.version "8.2")
+                [
+                  (pkgs.fetchpatch {
+                    url = "https://github.com/php/php-src/commit/d6e70e705323a50b616ffee9402245ab97de3e4e.patch";
+                    hash = "sha256-Axu09l3uQ83qe30aDsR+Bt29cJiF4mLknwDyQf94vic=";
+                    includes = [
+                      "ext/dom/tests/gh10234.phpt"
+                    ];
+                  })
+                ];
+        in
+        ourPatches ++ upstreamPatches;
 
-        postPatch = lib.concatStringsSep "\n" [
-          (attrs.postPatch or "")
-
-          (lib.optionalString
-            (lib.versionAtLeast prev.php.version "7.3" && lib.versionOlder prev.php.version "7.4")
-            ''
-              # 4cc261aa6afca2190b1b74de39c3caa462ec6f0b deletes this file but fetchpatch does not support deletions.
-              rm ext/dom/tests/bug80268.phpt
-            ''
-          )
-
-          (lib.optionalString (lib.versionOlder prev.php.version "7.4") ''
-            # 4cc261aa6afca2190b1b74de39c3caa462ec6f0b deletes this file but fetchpatch does not support deletions.
-            rm ext/dom/tests/bug43364.phpt
-          '')
-
-          (lib.optionalString
-            (lib.versionAtLeast prev.php.version "7.1" && lib.versionOlder prev.php.version "8.1")
-            ''
-              # Removing tests failing with libxml2 (2.11.4) > 2.10.4
-              rm ext/dom/tests/DOMDocument_loadXML_error2.phpt
-              rm ext/dom/tests/DOMDocument_load_error2.phpt
-            ''
-          )
+      configureFlags =
+        attrs.configureFlags or [ ]
+        ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
+          # Required to build on darwin.
+          "--with-libxml-dir=${libxml2_12.dev}"
         ];
-      }
-      // lib.optionalAttrs (lib.versionOlder prev.php.version "7.1" && pkgs.stdenv.cc.isClang) {
-        NIX_CFLAGS_COMPILE = (attrs.NIX_CFLAGS_COMPILE or "") + " -Wno-incompatible-function-pointer-types";
-      }
-    );
+
+      # Tests fail on Darwin for some reason.
+      doCheck = lib.versionOlder prev.php.version "7.4" -> pkgs.stdenv.isLinux;
+
+      postPatch = lib.concatStringsSep "\n" [
+        (attrs.postPatch or "")
+
+        (lib.optionalString
+          (lib.versionAtLeast prev.php.version "7.3" && lib.versionOlder prev.php.version "7.4")
+          ''
+            # 4cc261aa6afca2190b1b74de39c3caa462ec6f0b deletes this file but fetchpatch does not support deletions.
+            rm ext/dom/tests/bug80268.phpt
+          ''
+        )
+
+        (lib.optionalString (lib.versionOlder prev.php.version "7.4") ''
+          # 4cc261aa6afca2190b1b74de39c3caa462ec6f0b deletes this file but fetchpatch does not support deletions.
+          rm ext/dom/tests/bug43364.phpt
+        '')
+
+        (lib.optionalString
+          (lib.versionAtLeast prev.php.version "7.1" && lib.versionOlder prev.php.version "8.1")
+          ''
+            # Removing tests failing with libxml2 (2.11.4) > 2.10.4
+            rm ext/dom/tests/DOMDocument_loadXML_error2.phpt
+            rm ext/dom/tests/DOMDocument_load_error2.phpt
+          ''
+        )
+      ];
+
+      env = mergeEnv attrs {
+        NIX_CFLAGS_COMPILE = lib.optionals (lib.versionOlder prev.php.version "7.1") [
+          "-Wno-incompatible-${lib.optionalString isClang "function-"}pointer-types"
+        ];
+      };
+    });
 
     ds =
       if lib.versionOlder prev.php.version "7.0" then
@@ -205,7 +250,9 @@ in
         prev.extensions.ds.overrideAttrs (attrs: {
           preConfigure =
             let
-              deps = lib.optionals (lib.versionOlder prev.php.version "8.0") [ final.extensions.json ];
+              deps = lib.optionals (lib.versionOlder prev.php.version "8.0") [
+                final.extensions.json
+              ];
             in
             attrs.preConfigure or "" + linkInternalDeps deps;
         });
@@ -217,7 +264,9 @@ in
       prev.extensions.enchant.overrideAttrs (attrs: {
         buildInputs =
           attrs.buildInputs or [ ]
-          ++ lib.optionals (lib.versionOlder prev.php.version "8.0") [ enchant1 ];
+          ++ lib.optionals (lib.versionOlder prev.php.version "8.0") [
+            enchant1
+          ];
 
         configureFlags =
           attrs.configureFlags or [ ]
@@ -226,13 +275,13 @@ in
           ];
       });
 
-    fileinfo =
-      if lib.versionOlder prev.php.version "7.2" && pkgs.stdenv.cc.isClang then
-        prev.extensions.fileinfo.overrideAttrs (attrs: {
-          NIX_CFLAGS_COMPILE = (attrs.NIX_CFLAGS_COMPILE or "") + " -Wno-implicit-int";
-        })
-      else
-        prev.extensions.fileinfo;
+    fileinfo = prev.extensions.fileinfo.overrideAttrs (attrs: {
+      env = mergeEnv attrs {
+        NIX_CFLAGS_COMPILE = lib.optionals (lib.versionOlder prev.php.version "7.2") [
+          "-Wno-implicit-int"
+        ];
+      };
+    });
 
     ffi =
       if lib.versionAtLeast prev.php.version "7.4" then
@@ -280,7 +329,42 @@ in
             url = "https://github.com/php/php-src/commit/632b6e7aac207194adc3d0b41615bfb610757f41.patch";
             sha256 = "0xn3ivhc4p070vbk5yx0mzj2n7p04drz3f98i77amr51w0vzv046";
           })
-        ];
+        ]
+        ++
+          lib.optionals (lib.versionAtLeast prev.php.version "8.0" && lib.versionOlder prev.php.version "8.1")
+            [
+              # Throw instead of letting gettext > 0.22.5 crash with `SIGABRT`
+              # when passing `LC_ALL` category to `dcgettext`/`dcngettext` functions.
+              #
+              # This surfaced as a failure of `dcngettext` test, which passes `0`
+              # as a `$category` to those functions. It only affected Darwin
+              # because it defines `LC_ALL` as 0. On Linux, glibc defines `LC_CTYPE` as 0.
+              #
+              # https://github.com/php/php-src/commit/9999a0cb757344974889a6f548727de6f2c3c10d
+              (pkgs.fetchpatch {
+                url = "https://github.com/php/php-src/commit/9999a0cb757344974889a6f548727de6f2c3c10d.patch";
+                hash = "sha256-LHNU6qwn5//z9VVn3aQkQMYEt/LjKgyIUvDen0dhJdg=";
+                excludes = [
+                  "NEWS"
+                  "UPGRADING"
+                ];
+              })
+            ];
+
+      postPatch =
+        attrs.postPatch or ""
+        +
+          lib.optionalString
+            (
+              lib.versionAtLeast prev.php.version "7.1"
+              && lib.versionOlder prev.php.version "8.0"
+              && pkgs.stdenv.isDarwin
+            )
+            ''
+              # Disable test failing on Darwin (see 9999a0cb757344974889a6f548727de6f2c3c10d above)
+              # We do not apply the fix because passing category to `dcgettext`/`dcngettext` functions should be rare.
+              rm ext/gettext/tests/dcngettext.phpt
+            '';
     });
 
     grpc =
@@ -288,82 +372,6 @@ in
         throw "php.extensions.grpc requires PHP version >= 7.0"
       else
         prev.extensions.grpc;
-
-    igbinary =
-      if lib.versionOlder prev.php.version "7.0" then
-        prev.extensions.igbinary.overrideAttrs (attrs: {
-          name = "igbinary-2.0.8";
-          version = "2.0.8";
-          src = pkgs.fetchurl {
-            url = "http://pecl.php.net/get/igbinary-2.0.8.tgz";
-            hash = "sha256-usurEXLgc7GFfcB6SGv9rKbWD77WeM4PSzfNAY71toA=";
-          };
-        })
-      else
-        prev.extensions.igbinary;
-
-    inotify =
-      if lib.versionOlder prev.php.version "7.0" then
-        prev.extensions.inotify.overrideAttrs (attrs: {
-          name = "inotify-0.1.6";
-          version = "0.1.6";
-          src = pkgs.fetchurl {
-            url = "http://pecl.php.net/get/inotify-0.1.6.tgz";
-            hash = "sha256-l5+Aol1OsN4oJhf/wN9G8HNGqDg/MQublD5ImS5bSU4=";
-          };
-        })
-      else
-        prev.extensions.inotify;
-
-    intl = prev.extensions.intl.overrideAttrs (
-      attrs:
-      {
-        buildInputs =
-          if lib.versionOlder prev.php.version "8.1.0" then
-            (builtins.filter (pkg: pkg != pkgs.icu73) attrs.buildInputs) ++ [ pkgs.icu64 ]
-          else
-            attrs.buildInputs;
-        doCheck = if lib.versionOlder prev.php.version "7.2" then false else attrs.doCheck or true;
-        patches =
-          let
-            upstreamPatches = attrs.patches or [ ];
-
-            ourPatches =
-              lib.optionals (lib.versionOlder prev.php.version "7.1") [
-                # Fix build with newer ICU.
-                (pkgs.fetchpatch {
-                  url = "https://github.com/php/php-src/commit/8d35a423838eb462cd39ee535c5d003073cc5f22.patch";
-                  sha256 =
-                    if lib.versionOlder prev.php.version "7.0" then
-                      "8v0k6zaE5w4yCopCVa470TMozAXyK4fQelr+KuVnAv4="
-                    else
-                      "NO3EY5z1LFWKor9c/9rJo1rpigG5x8W3Uj5+xAOwm+g=";
-                  postFetch = ''
-                    # Resolve conflicts of the upstream patch with the old PHP source tree.
-                    patch "$out" < ${
-                      if lib.versionOlder prev.php.version "7.0" then
-                        ./patches/intl-icu-patch-5.6-compat.patch
-                      else
-                        ./patches/intl-icu-patch-7.0-compat.patch
-                    }
-                  '';
-                })
-              ]
-              ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
-                # Fix aarch64 build
-                # Introduced in https://github.com/NixOS/nixpkgs/commit/30e812c6c09e1b971dc902399f3dc39d542d89d9
-                (pkgs.fetchpatch {
-                  url = "https://github.com/php/php-src/commit/93a9b56c90c334896e977721bfb3f38b1721cec6.patch";
-                  sha256 = "055l40lpyhb0rbjn6y23qkzdhvpp7inbnn6x13cpn4inmhjqfpg4";
-                })
-              ];
-          in
-          ourPatches ++ upstreamPatches;
-      }
-      // lib.optionalAttrs (lib.versionOlder prev.php.version "7.1" && pkgs.stdenv.cc.isClang) {
-        NIX_CFLAGS_COMPILE = (attrs.NIX_CFLAGS_COMPILE or "") + " -Wno-register";
-      }
-    );
 
     iconv = prev.extensions.iconv.overrideAttrs (attrs: {
       patches =
@@ -378,8 +386,21 @@ in
         ourPatches ++ upstreamPatches;
     });
 
+    igbinary =
+      if lib.versionOlder prev.php.version "7.0" then
+        prev.extensions.igbinary.overrideAttrs (attrs: {
+          name = "igbinary-2.0.8";
+          version = "2.0.8";
+          src = pkgs.fetchurl {
+            url = "http://pecl.php.net/get/igbinary-2.0.8.tgz";
+            hash = "sha256-usurEXLgc7GFfcB6SGv9rKbWD77WeM4PSzfNAY71toA=";
+          };
+        })
+      else
+        prev.extensions.igbinary;
+
     imap =
-      if lib.versionOlder prev.php.version "8.1" && pkgs.stdenv.cc.isClang then
+      if lib.versionOlder prev.php.version "8.1" then
         prev.extensions.imap.overrideAttrs (attrs: {
           patches = (attrs.patches or [ ]) ++ [
             (pkgs.fetchpatch {
@@ -391,11 +412,78 @@ in
       else
         prev.extensions.imap;
 
+    inotify =
+      if lib.versionOlder prev.php.version "7.0" then
+        prev.extensions.inotify.overrideAttrs (attrs: {
+          name = "inotify-0.1.6";
+          version = "0.1.6";
+          src = pkgs.fetchurl {
+            url = "http://pecl.php.net/get/inotify-0.1.6.tgz";
+            hash = "sha256-l5+Aol1OsN4oJhf/wN9G8HNGqDg/MQublD5ImS5bSU4=";
+          };
+        })
+      else
+        prev.extensions.inotify;
+
+    intl = prev.extensions.intl.overrideAttrs (attrs: {
+      buildInputs =
+        if lib.versionOlder prev.php.version "8.1.0" then
+          (builtins.filter (pkg: pkg != pkgs.icu73) attrs.buildInputs) ++ [ pkgs.icu64 ]
+        else
+          attrs.buildInputs;
+      doCheck = if lib.versionOlder prev.php.version "7.2" then false else attrs.doCheck or true;
+      patches =
+        let
+          upstreamPatches = attrs.patches or [ ];
+
+          ourPatches =
+            lib.optionals (lib.versionOlder prev.php.version "7.1") [
+              # Fix build with newer ICU.
+              (pkgs.fetchpatch {
+                url = "https://github.com/php/php-src/commit/8d35a423838eb462cd39ee535c5d003073cc5f22.patch";
+                sha256 =
+                  if lib.versionOlder prev.php.version "7.0" then
+                    "8v0k6zaE5w4yCopCVa470TMozAXyK4fQelr+KuVnAv4="
+                  else
+                    "NO3EY5z1LFWKor9c/9rJo1rpigG5x8W3Uj5+xAOwm+g=";
+                postFetch = ''
+                  # Resolve conflicts of the upstream patch with the old PHP source tree.
+                  patch "$out" < ${
+                    if lib.versionOlder prev.php.version "7.0" then
+                      ./patches/intl-icu-patch-5.6-compat.patch
+                    else
+                      ./patches/intl-icu-patch-7.0-compat.patch
+                  }
+                '';
+              })
+            ]
+            ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
+              # Fix aarch64 build
+              # Introduced in https://github.com/NixOS/nixpkgs/commit/30e812c6c09e1b971dc902399f3dc39d542d89d9
+              (pkgs.fetchpatch {
+                url = "https://github.com/php/php-src/commit/93a9b56c90c334896e977721bfb3f38b1721cec6.patch";
+                sha256 = "055l40lpyhb0rbjn6y23qkzdhvpp7inbnn6x13cpn4inmhjqfpg4";
+              })
+            ];
+        in
+        ourPatches ++ upstreamPatches;
+
+      env = mergeEnv attrs {
+        NIX_CFLAGS_COMPILE =
+          lib.optionals (lib.versionOlder prev.php.version "7.1" && pkgs.stdenv.cc.isClang)
+            [
+              "-Wno-register"
+            ];
+      };
+    });
+
     json =
       if lib.versionAtLeast prev.php.version "8.0" then
         throw "php.extensions.json is enabled by default in PHP >= 8.0."
       else
-        prev.mkExtension { name = "json"; };
+        prev.mkExtension {
+          name = "json";
+        };
 
     mailparse =
       if lib.versionOlder prev.php.version "7.0" then
@@ -425,13 +513,17 @@ in
       else
         prev.extensions.maxminddb;
 
-    mbstring =
-      if lib.versionOlder prev.php.version "7.0" && pkgs.stdenv.cc.isClang then
-        prev.extensions.mbstring.overrideAttrs (attrs: {
-          NIX_CFLAGS_COMPILE = (attrs.NIX_CFLAGS_COMPILE or "") + " -Wno-implicit-function-declaration";
-        })
-      else
-        prev.extensions.mbstring;
+    mbstring = prev.extensions.mbstring.overrideAttrs (attrs: {
+      env = mergeEnv attrs {
+        NIX_CFLAGS_COMPILE =
+          lib.optionals (lib.versionOlder prev.php.version "7.0") [
+            "-Wno-implicit-function-declaration"
+          ]
+          ++ lib.optionals (lib.versionOlder prev.php.version "7.0" && !isClang) [
+            "-Wno-incompatible-pointer-types"
+          ];
+      };
+    });
 
     mcrypt =
       if lib.versionOlder prev.php.version "7.0" then
@@ -496,7 +588,9 @@ in
       if lib.versionOlder prev.php.version "7.0" then
         prev.mkExtension {
           name = "mssql";
-          configureFlags = [ "--with-mssql=${pkgs.freetds}" ];
+          configureFlags = [
+            "--with-mssql=${pkgs.freetds}"
+          ];
           patches = [
             # Make sure it looks also for the proper extension files
             ./patches/0001-mssql-extension-fix-builds-on-darwin.patch
@@ -578,18 +672,21 @@ in
     opcache = prev.extensions.opcache.overrideAttrs (attrs: {
       patches =
         attrs.patches or [ ]
-        ++ lib.optionals
-          (lib.versionAtLeast prev.php.version "7.0" && lib.versionOlder prev.php.version "7.4")
-          [
-            # Introduced in https://github.com/NixOS/nixpkgs/commit/2e0d4a8b39a03a0db0c6c3622473d333a44d1ec1
-            ./patches/zend_file_cache_config.patch
-          ];
+        ++
+          lib.optionals (lib.versionAtLeast prev.php.version "7.0" && lib.versionOlder prev.php.version "7.4")
+            [
+              # Introduced in https://github.com/NixOS/nixpkgs/commit/2e0d4a8b39a03a0db0c6c3622473d333a44d1ec1
+              ./patches/zend_file_cache_config.patch
+            ];
 
       doCheck = lib.versionAtLeast prev.php.version "7.4";
 
-      postPatch = removeLines (lib.optionals (
-        lib.versionOlder prev.php.version "7.2.20" && pkgs.stdenv.isDarwin
-      ) [ "rm ext/opcache/tests/bug78106.phpt" ]) attrs.postPatch;
+      postPatch = removeLines (lib.optionals
+        (lib.versionOlder prev.php.version "7.2.20" && pkgs.stdenv.isDarwin)
+        [
+          "rm ext/opcache/tests/bug78106.phpt"
+        ]
+      ) attrs.postPatch;
     });
 
     openssl = prev.extensions.openssl.overrideAttrs (attrs: {
@@ -666,38 +763,44 @@ in
         ourPatches ++ upstreamPatches;
     });
 
-    pdo_mysql =
-      if lib.versionOlder prev.php.version "7.0" then
-        prev.extensions.pdo_mysql.overrideAttrs (attrs: {
+    pdo_mysql = prev.extensions.pdo_mysql.overrideAttrs (attrs: {
+      env = mergeEnv attrs {
+        NIX_CFLAGS_COMPILE = lib.optionals (lib.versionOlder prev.php.version "7.0") [
           # PHP_MYSQL_SOCK didn't exist in php 5.6
-          NIX_CFLAGS_COMPILE = "-DPDO_MYSQL_UNIX_ADDR=\"/run/mysqld/mysqld.sock\"";
-        })
-      else
-        prev.extensions.pdo_mysql;
+          "-DPDO_MYSQL_UNIX_ADDR=\"/run/mysqld/mysqld.sock\""
+        ];
+      };
+    });
 
-    pdo_odbc =
-      if lib.versionOlder prev.php.version "8.1" && pkgs.stdenv.cc.isClang then
-        prev.extensions.pdo_odbc.overrideAttrs (attrs: {
-          NIX_CFLAGS_COMPILE = (attrs.NIX_CFLAGS_COMPILE or "") + " -Wno-incompatible-function-pointer-types";
-        })
-      else
-        prev.extensions.pdo_odbc;
+    pdo_odbc = prev.extensions.pdo_odbc.overrideAttrs (attrs: {
+      env = mergeEnv attrs {
+        NIX_CFLAGS_COMPILE =
+          lib.optionals (lib.versionOlder prev.php.version "8.1" && pkgs.stdenv.cc.isClang)
+            [
+              "-Wno-incompatible-function-pointer-types"
+            ];
+      };
+    });
 
-    pdo_pgsql =
-      if lib.versionOlder prev.php.version "8.1" && pkgs.stdenv.cc.isClang then
-        prev.extensions.pdo_pgsql.overrideAttrs (attrs: {
-          NIX_CFLAGS_COMPILE = (attrs.NIX_CFLAGS_COMPILE or "") + " -Wno-incompatible-function-pointer-types";
-        })
-      else
-        prev.extensions.pdo_pgsql;
+    pdo_pgsql = prev.extensions.pdo_pgsql.overrideAttrs (attrs: {
+      env = mergeEnv attrs {
+        NIX_CFLAGS_COMPILE =
+          lib.optionals (lib.versionOlder prev.php.version "8.1" && pkgs.stdenv.cc.isClang)
+            [
+              "-Wno-incompatible-function-pointer-types"
+            ];
+      };
+    });
 
-    pdo_sqlite =
-      if lib.versionOlder prev.php.version "7.4" && pkgs.stdenv.cc.isClang then
-        prev.extensions.pdo_sqlite.overrideAttrs (attrs: {
-          NIX_CFLAGS_COMPILE = (attrs.NIX_CFLAGS_COMPILE or "") + " -Wno-incompatible-function-pointer-types";
-        })
-      else
-        prev.extensions.pdo_sqlite;
+    pdo_sqlite = prev.extensions.pdo_sqlite.overrideAttrs (attrs: {
+      env = mergeEnv attrs {
+        NIX_CFLAGS_COMPILE =
+          lib.optionals (lib.versionOlder prev.php.version "7.4" && pkgs.stdenv.cc.isClang)
+            [
+              "-Wno-incompatible-function-pointer-types"
+            ];
+      };
+    });
 
     readline = prev.extensions.readline.overrideAttrs (attrs: {
       patches =
@@ -718,23 +821,25 @@ in
     redis =
       if lib.versionOlder prev.php.version "7.0" then
         final.callPackage ./extensions/redis/4.nix { }
-      else if lib.versionOlder prev.php.version "7.1" then
+      else if lib.versionOlder prev.php.version "7.3" then
         final.callPackage ./extensions/redis/6.0.nix { }
       else if lib.versionOlder prev.php.version "8.0" then
-        prev.extensions.redis.overrideAttrs (
-          attrs:
-          {
-            preConfigure =
-              let
-                deps = lib.optionals (lib.versionOlder prev.php.version "8.0") [ final.extensions.json ];
-              in
-              attrs.preConfigure or "" + linkInternalDeps deps;
-          }
-          // lib.optionalAttrs (lib.versionOlder prev.php.version "7.2" && pkgs.stdenv.cc.isClang) {
-            NIX_CFLAGS_COMPILE =
-              (attrs.NIX_CFLAGS_COMPILE or "") + " -Wno-implicit-function-declaration -Wno-int-conversion";
-          }
-        )
+        prev.extensions.redis.overrideAttrs (attrs: {
+          preConfigure =
+            let
+              deps = lib.optionals (lib.versionOlder prev.php.version "8.0") [
+                final.extensions.json
+              ];
+            in
+            attrs.preConfigure or "" + linkInternalDeps deps;
+
+          env = mergeEnv attrs {
+            NIX_CFLAGS_COMPILE = lib.optionals (lib.versionOlder prev.php.version "7.2") [
+              "-Wno-implicit-function-declaration"
+              "-Wno-int-conversion"
+            ];
+          };
+        })
       else
         prev.extensions.redis;
 
@@ -750,12 +855,20 @@ in
       else
         throw "php.extensions.relay requires PHP version >= 8.0.";
 
+    session = prev.extensions.session.overrideAttrs (attrs: {
+      env = mergeEnv attrs {
+        NIX_CFLAGS_COMPILE = lib.optionals (lib.versionOlder prev.php.version "7.0") [
+          "-Wno-incompatible-pointer-types"
+        ];
+      };
+    });
+
     simplexml = prev.extensions.simplexml.overrideAttrs (attrs: {
       configureFlags =
         attrs.configureFlags or [ ]
         ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
           # Required to build on darwin.
-          "--with-libxml-dir=${pkgs.libxml2.dev}"
+          "--with-libxml-dir=${libxml2_12.dev}"
         ];
 
       # Tests fail on Darwin for some reason.
@@ -783,11 +896,26 @@ in
         attrs.configureFlags or [ ]
         ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
           # Required to build on darwin.
-          "--with-libxml-dir=${pkgs.libxml2.dev}"
+          "--with-libxml-dir=${libxml2_12.dev}"
         ];
 
       # Tests fail on Darwin with older PHP versions for some reason.
       doCheck = attrs.doCheck or true && (lib.versionOlder prev.php.version "7.4" -> pkgs.stdenv.isLinux);
+
+      postPatch =
+        attrs.postPatch or ""
+        +
+          lib.optionalString
+            (lib.versionAtLeast prev.php.version "7.1" && lib.versionOlder prev.php.version "7.4")
+            ''
+              rm ext/soap/tests/bugs/bug66112.phpt
+            ''
+        +
+          lib.optionalString
+            (lib.versionAtLeast prev.php.version "7.1" && lib.versionOlder prev.php.version "7.2")
+            ''
+              rm ext/soap/tests/bugs/bug76348.phpt
+            '';
     });
 
     sqlite3 = prev.extensions.sqlite3.overrideAttrs (attrs: {
@@ -803,7 +931,9 @@ in
                 (pkgs.fetchpatch {
                   url = "https://github.com/php/php-src/commit/2a4775d6a73e9f6d4fc8e7df6f052aa18790a8e9.patch";
                   hash = "sha256-2VNfURGZmIEXtoLxOLX5wec9mqNGEWPY3ofCMw4E7S0=";
-                  excludes = [ "NEWS" ];
+                  excludes = [
+                    "NEWS"
+                  ];
                 })
               ];
         in
@@ -840,13 +970,17 @@ in
         prev.mkExtension {
           name = "wddx";
 
-          buildInputs = [ pkgs.libxml2 ];
+          buildInputs = [
+            libxml2_12
+          ];
 
-          internalDeps = [ final.extensions.session ];
+          internalDeps = [
+            final.extensions.session
+          ];
 
           configureFlags = [
             "--enable-wddx"
-            "--with-libxml-dir=${pkgs.libxml2.dev}"
+            "--with-libxml-dir=${libxml2_12.dev}"
           ];
         }
       else
@@ -854,24 +988,7 @@ in
 
     xdebug =
       # xdebug versions were determined using https://xdebug.org/docs/compat
-      if lib.versionAtLeast prev.php.version "8.4" then
-        prev.extensions.xdebug.overrideAttrs (attrs: {
-          name = "xdebug-3.4.0alpha1";
-          version = "3.4.0alpha1";
-          src = pkgs.fetchurl {
-            url = "https://xdebug.org/files/xdebug-3.4.0alpha1.tgz";
-            hash = "sha256-S4oizwlhom50uV+ToV6ctdWka8d2CKnAPb2YmWOytOc=";
-          };
-
-          patches = [
-            # Fix missing ZEND_EXIT
-            (pkgs.fetchpatch {
-              url = "https://github.com/xdebug/xdebug/commit/6ecd35f898e67cbe7f9257e7cb3a4c602a3dc8ec.patch";
-              hash = "sha256-IYc1KKPBYek4AXEijoM9RaTwp51J0Gz/CQ1HgmTct3Q=";
-            })
-          ];
-        })
-      else if lib.versionAtLeast prev.php.version "8.0" then
+      if lib.versionAtLeast prev.php.version "8.0" then
         prev.extensions.xdebug
       else if lib.versionAtLeast prev.php.version "7.2" then
         prev.extensions.xdebug.overrideAttrs (attrs: {
@@ -915,7 +1032,7 @@ in
         attrs.configureFlags or [ ]
         ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
           # Required to build on darwin.
-          "--with-libxml-dir=${pkgs.libxml2.dev}"
+          "--with-libxml-dir=${libxml2_12.dev}"
         ];
     });
 
@@ -924,7 +1041,7 @@ in
         attrs.configureFlags or [ ]
         ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
           # Required to build on darwin.
-          "--with-libxml-dir=${pkgs.libxml2.dev}"
+          "--with-libxml-dir=${libxml2_12.dev}"
         ];
     });
 
@@ -933,15 +1050,16 @@ in
         prev.mkExtension {
           name = "xmlrpc";
           buildInputs = [
-            pkgs.libxml2
+            libxml2_12
             pkgs.libiconv
           ];
-          configureFlags =
-            [ "--with-xmlrpc" ]
-            ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
-              # Required to build on darwin.
-              "--with-libxml-dir=${pkgs.libxml2.dev}"
-            ];
+          configureFlags = [
+            "--with-xmlrpc"
+          ]
+          ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
+            # Required to build on darwin.
+            "--with-libxml-dir=${libxml2_12.dev}"
+          ];
         }
       else
         throw "php.extensions.xmlrpc is no longer available in PHP version >= 8.0.";
@@ -951,7 +1069,7 @@ in
         attrs.configureFlags or [ ]
         ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
           # Required to build on darwin.
-          "--with-libxml-dir=${pkgs.libxml2.dev}"
+          "--with-libxml-dir=${libxml2_12.dev}"
         ];
 
       # Test tests/bug71536.phpt fails on Darwin with PHP 7.3 for some reason.
@@ -962,17 +1080,19 @@ in
     zip = prev.extensions.zip.overrideAttrs (attrs: {
       configureFlags =
         attrs.configureFlags or [ ]
-        ++ lib.optionals (lib.versionOlder prev.php.version "7.3") [ "--with-libzip" ]
-        ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [ "--with-zlib-dir=${pkgs.zlib.dev}" ];
+        ++ lib.optionals (lib.versionOlder prev.php.version "7.3") [
+          "--with-libzip"
+        ]
+        ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
+          "--with-zlib-dir=${pkgs.zlib.dev}"
+        ];
     });
 
-    zlib = prev.extensions.zlib.overrideAttrs (
-      attrs:
-      {
-        patches =
-          attrs.patches or [ ]
-          ++ lib.optionals
-            (lib.versionAtLeast prev.php.version "7.1" && lib.versionOlder prev.php.version "7.4")
+    zlib = prev.extensions.zlib.overrideAttrs (attrs: {
+      patches =
+        attrs.patches or [ ]
+        ++
+          lib.optionals (lib.versionAtLeast prev.php.version "7.1" && lib.versionOlder prev.php.version "7.4")
             [
               # Fix Darwin build
               # Introduced in https://github.com/NixOS/nixpkgs/commit/af064a0e12ad8e5a8a2e8d8ad25fc0baf3f8ef54
@@ -980,13 +1100,17 @@ in
               ./patches/zlib-darwin-tests.patch
             ];
 
-        configureFlags =
-          attrs.configureFlags or [ ]
-          ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [ "--with-zlib-dir=${pkgs.zlib.dev}" ];
-      }
-      // lib.optionalAttrs (lib.versionOlder prev.php.version "7.0" && pkgs.stdenv.cc.isClang) {
-        NIX_CFLAGS_COMPILE = (attrs.NIX_CFLAGS_COMPILE or "") + " -Wno-incompatible-function-pointer-types";
-      }
-    );
+      configureFlags =
+        attrs.configureFlags or [ ]
+        ++ lib.optionals (lib.versionOlder prev.php.version "7.4") [
+          "--with-zlib-dir=${pkgs.zlib.dev}"
+        ];
+
+      env = mergeEnv attrs {
+        NIX_CFLAGS_COMPILE = lib.optionals (lib.versionOlder prev.php.version "7.0") [
+          "-Wno-incompatible-${lib.optionalString isClang "function-"}pointer-types"
+        ];
+      };
+    });
   };
 }

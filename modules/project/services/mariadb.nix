@@ -502,6 +502,7 @@ in
           RuntimeDirectory = "mysqld";
           RuntimeDirectoryMode = "0700";
           RuntimeDirectoryPreserve = "yes";
+          BindPaths = [ "/run/user/${config.project.username}" "/run/user/%U/mysqld" ];
           ConfigurationDirectory = "mysql";
           ConfigurationDirectoryMode = "0700";
           # Access write directories (datadir is automatically allowed via StateDirectory)
@@ -514,7 +515,7 @@ in
           # Sandboxing
           ProtectSystem = "strict";
           # Cannot be used as /run/user will be inaccessible, which is used for the socket
-          # ProtectHome = true;
+          ProtectHome = "tmpfs";
           PrivateTmp = true;
           PrivateDevices = true;
           ProtectHostname = true;
